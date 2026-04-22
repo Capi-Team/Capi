@@ -43,3 +43,4 @@ next-env.d.ts
 capi-app/node_modules/
 capi-app/.next/
 capi-app/.env*
+/lib/generated/prisma

@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model activities {
+  id             Int             @id @default(autoincrement())
+  process_id     Int?
+  question       String
+  type           String?         @db.VarChar(50)
+  correct_answer String
+  processes      processes?      @relation(fields: [process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_attempts  user_attempts[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model companies {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(255)
+  domain     String?     @db.VarChar(255)
+  created_at DateTime?   @default(now()) @db.Timestamp(6)
+  processes  processes[]
+  users      users[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model process_steps {
+  id         Int       @id @default(autoincrement())
+  process_id Int
+  step_order Int
+  content    String
+  processes  processes @relation(fields: [process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model processes {
+  id            Int             @id @default(autoincrement())
+  name          String          @db.VarChar(255)
+  description   String?
+  company_id    Int?
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  activities    activities[]
+  process_steps process_steps[]
+  companies     companies?      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  resources     resources[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model resources {
+  id         Int        @id @default(autoincrement())
+  process_id Int?
+  url        String
+  type       String?    @db.VarChar(50)
+  processes  processes? @relation(fields: [process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model roles {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique @db.VarChar(50)
+  users users[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_attempts {
+  id          Int         @id @default(autoincrement())
+  user_id     Int?
+  activity_id Int?
+  answer      String?
+  is_correct  Boolean?
+  created_at  DateTime?   @default(now()) @db.Timestamp(6)
+  activities  activities? @relation(fields: [activity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users       users?      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique @db.VarChar(255)
+  password      String?
+  google_id     String?         @unique @db.VarChar(255)
+  provider      String?         @default("local") @db.VarChar(50)
+  company_id    Int?
+  role_id       Int?
+  is_approved   Boolean?        @default(false)
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  user_attempts user_attempts[]
+  companies     companies?      @relation(fields: [company_id], references: [id], onUpdate: NoAction)
+  roles         roles?          @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+}
