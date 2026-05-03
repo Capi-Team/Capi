@@ -133,21 +133,6 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <div className="mt-6 space-y-3 border-t border-[#efc26f]/35 pt-4">
-            <p className="text-sm text-[#4f5f82]">
-              ¿Quieres registrarte con tu cuenta de Google?
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-[#efc26f] bg-[#1c3270] text-[#fff6df] hover:bg-[#27458f]"
-              onClick={() => {
-                window.location.href = "/api/auth?action=google";
-              }}
-            >
-              Registrarte con Google
-            </Button>
-          </div>
 
           <p className="mt-6 text-sm text-[#4f5f82]">
             ¿Ya tienes cuenta?{" "}
