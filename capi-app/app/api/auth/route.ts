@@ -25,6 +25,14 @@ function toSafeString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getAllowedRegistrationDomains(): string[] {
+  const raw = process.env.ALLOWED_REGISTRATION_DOMAINS || "";
+  return raw
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 async function resolveDefaultRoleId(): Promise<number | null> {
   const preferredRoles = ["employee", "user", "member"];
   const role = await db.roles.findFirst({
@@ -56,6 +64,9 @@ async function handleRegister(body: Record<string, unknown>) {
   const email = toSafeEmail(body.email);
   const password = toSafeString(body.password);
   const confirmPassword = toSafeString(body.confirmPassword);
+  const allowPublicRegistration = process.env.ALLOW_PUBLIC_REGISTRATION === "true";
+  const allowedDomains = getAllowedRegistrationDomains();
+  const autoApproveUsers = process.env.AUTO_APPROVE_USERS === "true";
 
   if (!email || !password || !confirmPassword) {
     return NextResponse.json(
@@ -93,8 +104,17 @@ async function handleRegister(body: Record<string, unknown>) {
     );
   }
 
-  const company = await resolveCompanyByEmail(email);
-  if (!company) {
+  const domain = getEmailDomain(email);
+  let company = await resolveCompanyByEmail(email);
+  if (!company && !allowPublicRegistration) {
+    if (domain && allowedDomains.includes(domain)) {
+      company = await db.companies.create({
+        data: {
+          name: domain,
+          domain,
+        },
+      });
+    } else {
     return NextResponse.json(
       {
         success: false,
@@ -102,6 +122,7 @@ async function handleRegister(body: Record<string, unknown>) {
       },
       { status: 403 }
     );
+    }
   }
 
   const roleId = await resolveDefaultRoleId();
@@ -112,16 +133,18 @@ async function handleRegister(body: Record<string, unknown>) {
       email,
       password: passwordHash,
       provider: "local",
-      company_id: company.id,
+      company_id: company?.id ?? null,
       role_id: roleId,
-      is_approved: false,
+      is_approved: autoApproveUsers,
     },
   });
 
   return NextResponse.json(
     {
       success: true,
-      message: "Registro creado correctamente. Tu cuenta está pendiente de aprobación.",
+      message: autoApproveUsers
+        ? "Registro creado correctamente."
+        : "Registro creado correctamente. Tu cuenta está pendiente de aprobación.",
     },
     { status: 201 }
   );
@@ -130,6 +153,7 @@ async function handleRegister(body: Record<string, unknown>) {
 async function handleLogin(body: Record<string, unknown>) {
   const email = toSafeEmail(body.email);
   const password = toSafeString(body.password);
+  const autoApproveUsers = process.env.AUTO_APPROVE_USERS === "true";
 
   if (!email || !password) {
     return NextResponse.json(
@@ -138,16 +162,22 @@ async function handleLogin(body: Record<string, unknown>) {
     );
   }
 
-  const user = await db.users.findUnique({ where: { email } });
-  const hasPassword = !!user?.password;
-  const passwordOk =
-    hasPassword && user.password ? await comparePassword(password, user.password) : false;
+  let user = await db.users.findUnique({ where: { email } });
+  const passwordHash = user?.password ?? null;
+  const passwordOk = passwordHash ? await comparePassword(password, passwordHash) : false;
 
   if (!user || !passwordOk) {
     return NextResponse.json(
       { success: false, message: GENERIC_AUTH_ERROR },
       { status: 401 }
     );
+  }
+
+  if (!user.is_approved && autoApproveUsers) {
+    user = await db.users.update({
+      where: { id: user.id },
+      data: { is_approved: true },
+    });
   }
 
   if (!user.is_approved) {
@@ -241,6 +271,7 @@ async function fetchGoogleUserInfo(accessToken: string) {
 }
 
 async function completeGoogleAuth(code: string) {
+  const autoApproveUsers = process.env.AUTO_APPROVE_USERS === "true";
   const tokenData = await exchangeGoogleCode(code);
   const accessToken = tokenData?.access_token;
 
@@ -281,7 +312,7 @@ async function completeGoogleAuth(code: string) {
         google_id: googleSub,
         company_id: company.id,
         role_id: roleId,
-        is_approved: false,
+        is_approved: autoApproveUsers,
         password: null,
       },
     });
@@ -293,6 +324,13 @@ async function completeGoogleAuth(code: string) {
         provider: "google",
         company_id: user.company_id ?? company.id,
       },
+    });
+  }
+
+  if (!user.is_approved && autoApproveUsers) {
+    user = await db.users.update({
+      where: { id: user.id },
+      data: { is_approved: true },
     });
   }
 

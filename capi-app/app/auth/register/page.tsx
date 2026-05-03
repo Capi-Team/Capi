@@ -55,16 +55,19 @@ export default function RegisterPage() {
           confirmPassword,
         }),
       });
-      const data = (await response.json()) as { success?: boolean; message?: string };
+      let data: { success?: boolean; message?: string } = {};
+      try {
+        data = (await response.json()) as { success?: boolean; message?: string };
+      } catch {
+        data = {};
+      }
 
       if (!response.ok || !data.success) {
         setError(data.message || "No se pudo completar el registro.");
         return;
       }
 
-      setSuccess(
-        data.message || "Registro creado correctamente. Tu cuenta está pendiente de aprobación."
-      );
+      setSuccess(data.message || "Registro creado correctamente.");
       setPassword("");
       setConfirmPassword("");
     } catch {

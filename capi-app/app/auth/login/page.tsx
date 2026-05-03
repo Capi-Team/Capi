@@ -47,11 +47,16 @@ export default function LoginPage() {
           password,
         }),
       });
-      const data = (await response.json()) as {
-        success?: boolean;
-        message?: string;
-        redirectTo?: string;
-      };
+      let data: { success?: boolean; message?: string; redirectTo?: string } = {};
+      try {
+        data = (await response.json()) as {
+          success?: boolean;
+          message?: string;
+          redirectTo?: string;
+        };
+      } catch {
+        data = {};
+      }
 
       if (!response.ok || !data.success) {
         setError(data.message || "No fue posible iniciar sesión.");
