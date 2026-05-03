@@ -5,6 +5,8 @@ import { comparePassword, hashPassword, setSessionCookie, signSession } from "@/
 import { authConfig, getGoogleConfig } from "@/lib/config";
 
 const MIN_PASSWORD_LENGTH = 8;
+const SPECIAL_CHARACTERS = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/;
 const GENERIC_AUTH_ERROR = "Credenciales inválidas.";
 
 type AuthAction = "register" | "login" | "google";
@@ -23,6 +25,10 @@ function toSafeEmail(value: unknown): string {
 
 function toSafeString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function hasRequiredSpecialChar(password: string): boolean {
+  return SPECIAL_CHAR_REGEX.test(password);
 }
 
 function getAllowedRegistrationDomains(): string[] {
@@ -85,6 +91,16 @@ async function handleRegister(body: Record<string, unknown>) {
   if (password.length < MIN_PASSWORD_LENGTH) {
     return NextResponse.json(
       { success: false, message: "La contraseña debe tener al menos 8 caracteres." },
+      { status: 400 }
+    );
+  }
+
+  if (!hasRequiredSpecialChar(password)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: `La contraseña debe incluir al menos un caracter especial: ${SPECIAL_CHARACTERS}`,
+      },
       { status: 400 }
     );
   }

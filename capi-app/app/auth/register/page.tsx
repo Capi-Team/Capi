@@ -7,11 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 
 const MIN_PASSWORD_LENGTH = 8;
+const SPECIAL_CHARACTERS = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/;
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +39,11 @@ export default function RegisterPage() {
 
     if (password.length < MIN_PASSWORD_LENGTH) {
       setError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (!SPECIAL_CHAR_REGEX.test(password)) {
+      setError(`La contraseña debe incluir al menos un caracter especial: ${SPECIAL_CHARACTERS}`);
       return;
     }
 
@@ -104,28 +113,50 @@ export default function RegisterPage() {
               <label className="text-sm font-medium text-[#2f3d5f]" htmlFor="password">
                 Contraseña
               </label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#4f5f82]"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? "Ocultar" : "Ver"}
+                </button>
+              </div>
+              <p className="text-xs text-[#4f5f82]">
+                Mínimo {MIN_PASSWORD_LENGTH} caracteres y al menos un caracter especial (
+                {SPECIAL_CHARACTERS}).
+              </p>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#2f3d5f]" htmlFor="confirmPassword">
                 Confirmar contraseña
               </label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#4f5f82]"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                >
+                  {showConfirmPassword ? "Ocultar" : "Ver"}
+                </button>
+              </div>
             </div>
 
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
