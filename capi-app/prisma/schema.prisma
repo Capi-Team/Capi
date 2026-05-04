@@ -6,6 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model activities {
   id             Int             @id @default(autoincrement())
@@ -24,7 +30,6 @@ model companies {
   domain     String?     @db.VarChar(255)
   created_at DateTime?   @default(now()) @db.Timestamp(6)
   processes  processes[]
-  users      users[]
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -58,11 +63,10 @@ model resources {
   processes  processes? @relation(fields: [process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// Legacy tabla de roles (sin relación activa con User tras la migración de auth).
 model roles {
-  id    Int     @id @default(autoincrement())
-  name  String  @unique @db.VarChar(50)
-  users users[]
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -74,21 +78,48 @@ model user_attempts {
   is_correct  Boolean?
   created_at  DateTime?   @default(now()) @db.Timestamp(6)
   activities  activities? @relation(fields: [activity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users       users?      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user        User?       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model users {
-  id            Int             @id @default(autoincrement())
-  email         String          @unique @db.VarChar(255)
-  password      String?
-  google_id     String?         @unique @db.VarChar(255)
-  provider      String?         @default("local") @db.VarChar(50)
-  company_id    Int?
-  role_id       Int?
-  is_approved   Boolean?        @default(false)
-  created_at    DateTime?       @default(now()) @db.Timestamp(6)
-  user_attempts user_attempts[]
-  companies     companies?      @relation(fields: [company_id], references: [id], onUpdate: NoAction)
-  roles         roles?          @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @db.VarChar(255)
+  passwordHash String? @map("password") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  createdWorkspaces Workspace[]       @relation("WorkspaceCreatedBy")
+  workspaceMembers  WorkspaceMember[]
+  user_attempts     user_attempts[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  slug        String?  @unique @db.VarChar(255)
+  inviteCode  String?  @unique @map("invite_code") @db.VarChar(32)
+  createdById Int      @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  createdBy User              @relation("WorkspaceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  members   WorkspaceMember[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          Int           @id @default(autoincrement())
+  userId      Int           @map("user_id")
+  workspaceId Int           @map("workspace_id")
+  role        WorkspaceRole
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
 }

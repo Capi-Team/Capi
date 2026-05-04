@@ -1,10 +1,34 @@
-export default function DashboardPage() {
-  return (
-    <main className="p-6">
-      <h1 className="text-xl font-semibold text-[#2f3d5f]">Dashboard</h1>
-      <p className="mt-2 text-sm text-[#4f5f82]">
-        Bienvenido. Aquí podrás ver el contenido principal del panel.
-      </p>
-    </main>
-  );
+import { redirect } from "next/navigation";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { workspaceRoleShowsInviteCode } from "@/lib/workspaces/invite-visibility";
+import DashboardClient from "./dashboard-client";
+
+export default async function DashboardPage() {
+  const session = await getCurrentSession();
+  if (!session) {
+    redirect("/auth/login");
+  }
+
+  const userId = Number.parseInt(session.sub, 10);
+  if (!Number.isFinite(userId)) {
+    redirect("/auth/login");
+  }
+
+  const memberships = await db.workspaceMember.findMany({
+    where: { userId },
+    include: {
+      workspace: { select: { id: true, name: true, inviteCode: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const workspaces = memberships.map((m) => ({
+    id: m.workspace.id,
+    name: m.workspace.name,
+    role: m.role,
+    inviteCode: workspaceRoleShowsInviteCode(m.role) ? m.workspace.inviteCode : null,
+  }));
+
+  return <DashboardClient email={session.email} workspaces={workspaces} />;
 }
