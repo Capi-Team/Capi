@@ -69,7 +69,7 @@ export function parseWorkspaceJoinClientPayload(
   if (input.success === true) {
     const alreadyMember = input.alreadyMember === true;
     const redirectTo =
-      typeof input.redirectTo === "string" ? input.redirectTo : "/dashboard/member";
+      typeof input.redirectTo === "string" ? input.redirectTo : "/dashboard/workspace";
     return { success: true, alreadyMember, redirectTo };
   }
   if (input.success === false) {
@@ -90,7 +90,7 @@ export function parseWorkspaceSelectClientPayload(
   if (!isJsonRecord(input)) return null;
   if (input.success === true) {
     const redirectTo =
-      typeof input.redirectTo === "string" ? input.redirectTo : "/dashboard/member";
+      typeof input.redirectTo === "string" ? input.redirectTo : "/dashboard/workspace";
     return { success: true, redirectTo };
   }
   if (input.success === false) {

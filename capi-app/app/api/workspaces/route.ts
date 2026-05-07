@@ -70,6 +70,14 @@ export async function POST(request: NextRequest) {
           role: WorkspaceRole.OWNER,
         },
       },
+      aiConfig: {
+        create: {
+          companyName: name.slice(0, 255),
+          aiContext:
+            "Define aquí la documentación, procesos y políticas internas de la empresa. Un administrador puede completar este contexto desde el panel del asistente.",
+          strictMode: true,
+        },
+      },
     },
     select: {
       id: true,
@@ -79,7 +87,7 @@ export async function POST(request: NextRequest) {
   });
 
   // Actualizamos la sesión con el nuevo workspace y rol OWNER
-  await setActiveWorkspaceInSession(workspace.id, 'OWNER');
+  await setActiveWorkspaceInSession(workspace.id, WorkspaceRole.OWNER);
 
   return NextResponse.json({
     success: true,

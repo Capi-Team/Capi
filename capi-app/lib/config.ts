@@ -24,3 +24,8 @@ export function getJwtSecret(): string {
   if (fromSession) return fromSession;
   return requireEnv("JWT_SECRET");
 }
+
+export const ollamaConfig = {
+  baseUrl: (process.env.OLLAMA_URL ?? "http://localhost:11434").replace(/\/$/, ""),
+  model: process.env.OLLAMA_MODEL?.trim() || "llama3:8b",
+};

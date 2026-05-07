@@ -64,10 +64,18 @@ export async function createWorkspace(formData: FormData) {
           role: WorkspaceRole.OWNER,
         },
       },
+      aiConfig: {
+        create: {
+          companyName: name.slice(0, 255),
+          aiContext:
+            "Define aquí la documentación, procesos y políticas internas de la empresa. Un administrador puede completar este contexto desde el panel del asistente.",
+          strictMode: true,
+        },
+      },
     },
   });
 
-  await setActiveWorkspaceInSession(newWorkspace.id, "OWNER");
+  await setActiveWorkspaceInSession(newWorkspace.id, WorkspaceRole.OWNER);
   redirect("/dashboard/owner");
 }
 

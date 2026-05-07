@@ -103,9 +103,7 @@ function OrbitalShapes({ progress }: LandingSceneProps) {
           <bufferAttribute
             key={`inner-attr-${innerParticlePositions.length}`}
             attach="attributes-position"
-            array={innerParticlePositions}
-            count={innerParticlePositions.length / 3}
-            itemSize={3}
+            args={[innerParticlePositions, 3]}
           />
         </bufferGeometry>
         <pointsMaterial color="#ff8d1a" size={0.032} sizeAttenuation transparent opacity={0.9} />
@@ -115,9 +113,7 @@ function OrbitalShapes({ progress }: LandingSceneProps) {
           <bufferAttribute
             key={`outer-attr-${outerParticlePositions.length}`}
             attach="attributes-position"
-            array={outerParticlePositions}
-            count={outerParticlePositions.length / 3}
-            itemSize={3}
+            args={[outerParticlePositions, 3]}
           />
         </bufferGeometry>
         <pointsMaterial color="#ffd57b" size={0.02} sizeAttenuation transparent opacity={0.44} />
@@ -127,9 +123,7 @@ function OrbitalShapes({ progress }: LandingSceneProps) {
           <bufferAttribute
             key={`orange-attr-${orangeParticlePositions.length}`}
             attach="attributes-position"
-            array={orangeParticlePositions}
-            count={orangeParticlePositions.length / 3}
-            itemSize={3}
+            args={[orangeParticlePositions, 3]}
           />
         </bufferGeometry>
         <pointsMaterial color="#ff8a1f" size={0.022} sizeAttenuation transparent opacity={0.5} />

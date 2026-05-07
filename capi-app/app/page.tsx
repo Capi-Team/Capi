@@ -7,6 +7,8 @@ export default async function Home() {
     <HomeLanding
       isAuthenticated={session !== null}
       sessionEmail={session?.email ?? null}
+      activeWorkspaceRole={session?.activeWorkspaceRole ?? null}
+      hasWorkspace={typeof session?.activeWorkspaceId === "number"}
     />
   );
 }

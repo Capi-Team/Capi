@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // /dashboard/member requiere rol MEMBER (o OWNER que también puede verlo)
-  if (pathname.startsWith('/dashboard/member') && role !== 'MEMBER' && role !== 'OWNER') {
+  if (pathname.startsWith('/dashboard/member') && role !== 'MEMBER' && role !== 'OWNER' && role !== 'ADMIN') {
     return NextResponse.redirect(new URL('/dashboard/unauthorized', request.url));
   }
 
