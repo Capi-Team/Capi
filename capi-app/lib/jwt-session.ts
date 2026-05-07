@@ -1,12 +1,20 @@
 import { SignJWT, jwtVerify } from "jose";
+import type { WorkspaceRole } from "@prisma/client";
 import { authConfig, getJwtSecret } from "@/lib/config";
 import { cookies } from "next/headers";
+
+const SESSION_ROLES: WorkspaceRole[] = ["OWNER", "ADMIN", "MEMBER"];
+
+function parseWorkspaceRole(value: unknown): WorkspaceRole | undefined {
+  if (typeof value !== "string") return undefined;
+  return SESSION_ROLES.includes(value as WorkspaceRole) ? (value as WorkspaceRole) : undefined;
+}
 
 export type SessionPayload = {
   sub: string;
   email: string;
   activeWorkspaceId?: number;
-  activeWorkspaceRole?: 'OWNER' | 'MEMBER';
+  activeWorkspaceRole?: WorkspaceRole;
 };
 
 const encoder = new TextEncoder();
@@ -34,7 +42,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     const sub = typeof payload.sub === "string" ? payload.sub : null;
     const email = typeof payload.email === "string" ? payload.email : null;
     const activeWorkspaceId = typeof payload.activeWorkspaceId === "number" ? payload.activeWorkspaceId : undefined;
-    const activeWorkspaceRole = typeof payload.activeWorkspaceRole === "string" ? (payload.activeWorkspaceRole as 'OWNER' | 'MEMBER') : undefined;
+    const activeWorkspaceRole = parseWorkspaceRole(payload.activeWorkspaceRole);
     
     if (!sub || !email) return null;
     return { sub, email, activeWorkspaceId, activeWorkspaceRole };
@@ -43,7 +51,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
   }
 }
 
-export async function setActiveWorkspaceInSession(workspaceId: number, role: 'OWNER' | 'MEMBER') {
+export async function setActiveWorkspaceInSession(workspaceId: number, role: WorkspaceRole) {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(authConfig.sessionCookieName);
   

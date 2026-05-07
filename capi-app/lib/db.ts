@@ -60,7 +60,7 @@ function connectionStringFromEnvFiles(): string | undefined {
     try {
       const parsed = parseDotEnv(fs.readFileSync(file, "utf8"));
       const url =
-        parsed.DIRECT_URL?.trim() || parsed.DATABASE_URL?.trim();
+        parsed.DATABASE_URL?.trim() || parsed.DIRECT_URL?.trim();
       if (url) return url;
     } catch {
       continue;
@@ -76,8 +76,8 @@ function resolveConnectionString(): string | undefined {
   if (fromFile) return fromFile;
 
   return (
-    process.env["DIRECT_URL"]?.trim() ||
-    process.env["DATABASE_URL"]?.trim()
+    process.env["DATABASE_URL"]?.trim() ||
+    process.env["DIRECT_URL"]?.trim()
   );
 }
 

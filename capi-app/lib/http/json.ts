@@ -6,7 +6,7 @@ export function isJsonRecord(value: unknown): value is Record<string, unknown> {
 
 /** Lee el cuerpo de un Request y devuelve un objeto JSON plano o error (sin `any`). */
 export async function readJsonRecordFromRequest(
-  request: NextRequest
+  request: NextRequest | Request
 ): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false }> {
   let raw: unknown;
   try {

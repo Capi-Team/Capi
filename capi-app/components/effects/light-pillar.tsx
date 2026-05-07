@@ -1,7 +1,7 @@
 "use client";
-// @ts-nocheck
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import * as THREE from "three";
 import "./LightPillar.css";
 
@@ -20,13 +20,13 @@ const LightPillar = ({
   pillarRotation = 0,
   quality = "high",
 }) => {
-  const containerRef = useRef(null);
-  const rafRef = useRef(null);
-  const rendererRef = useRef(null);
-  const materialRef = useRef(null);
-  const sceneRef = useRef(null);
-  const cameraRef = useRef(null);
-  const geometryRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
+  const geometryRef = useRef<THREE.PlaneGeometry | null>(null);
   const mouseRef = useRef(new THREE.Vector2(0, 0));
   const timeRef = useRef(0);
   const rotationSpeedRef = useRef(rotationSpeed);
@@ -53,16 +53,18 @@ const LightPillar = ({
       navigator.userAgent
     );
     const isLowEndDevice = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
-    let effectiveQuality = quality;
-    if (isLowEndDevice && quality === "high") effectiveQuality = "medium";
-    if (isMobile && quality !== "low") effectiveQuality = "low";
 
     const qualitySettings = {
       low: { iterations: 24, waveIterations: 1, pixelRatio: 0.5, precision: "mediump", stepMultiplier: 1.5 },
       medium: { iterations: 40, waveIterations: 2, pixelRatio: 0.65, precision: "mediump", stepMultiplier: 1.2 },
       high: { iterations: 80, waveIterations: 4, pixelRatio: Math.min(window.devicePixelRatio, 2), precision: "highp", stepMultiplier: 1.0 },
-    };
-    const settings = qualitySettings[effectiveQuality] || qualitySettings.medium;
+    } as const;
+    type QualityKey = keyof typeof qualitySettings;
+    let effectiveQuality: QualityKey = quality as QualityKey;
+    if (isLowEndDevice && quality === "high") effectiveQuality = "medium";
+    if (isMobile && quality !== "low") effectiveQuality = "low";
+
+    const settings = qualitySettings[effectiveQuality] ?? qualitySettings.medium;
 
     let renderer;
     try {
@@ -84,7 +86,7 @@ const LightPillar = ({
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    const parseColor = (hex) => {
+    const parseColor = (hex: string) => {
       const color = new THREE.Color(hex);
       return new THREE.Vector3(color.r, color.g, color.b);
     };
@@ -149,7 +151,7 @@ const LightPillar = ({
     geometryRef.current = geometry;
     scene.add(new THREE.Mesh(geometry, material));
 
-    const handleMouseMove = (event) => {
+    const handleMouseMove = (event: MouseEvent) => {
       if (!interactive) return;
       const rect = container.getBoundingClientRect();
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -161,8 +163,9 @@ const LightPillar = ({
     let lastTime = performance.now();
     const targetFPS = effectiveQuality === "low" ? 30 : 60;
     const frameTime = 1000 / targetFPS;
-    const animate = (currentTime) => {
-      if (!materialRef.current || !rendererRef.current) return;
+    const animate = (currentTime: number) => {
+      if (!materialRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current)
+        return;
       const deltaTime = currentTime - lastTime;
       if (deltaTime >= frameTime) {
         timeRef.current += 0.016 * rotationSpeedRef.current;
@@ -170,7 +173,7 @@ const LightPillar = ({
         materialRef.current.uniforms.uTime.value = t;
         materialRef.current.uniforms.uRotCos.value = Math.cos(t * 0.3);
         materialRef.current.uniforms.uRotSin.value = Math.sin(t * 0.3);
-        rendererRef.current.render(scene, camera);
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
         lastTime = currentTime - (deltaTime % frameTime);
       }
       rafRef.current = requestAnimationFrame(animate);
@@ -204,8 +207,22 @@ const LightPillar = ({
     rotationSpeedRef.current = rotationSpeed;
   }, [rotationSpeed]);
 
-  if (!webGLSupported) return <div className={`light-pillar-fallback ${className}`} style={{ mixBlendMode }}>WebGL not supported</div>;
-  return <div ref={containerRef} className={`light-pillar-container ${className}`} style={{ mixBlendMode }} />;
+  if (!webGLSupported)
+    return (
+      <div
+        className={`light-pillar-fallback ${className}`}
+        style={{ mixBlendMode: mixBlendMode as CSSProperties["mixBlendMode"] }}
+      >
+        WebGL not supported
+      </div>
+    );
+  return (
+    <div
+      ref={containerRef}
+      className={`light-pillar-container ${className}`}
+      style={{ mixBlendMode: mixBlendMode as CSSProperties["mixBlendMode"] }}
+    />
+  );
 };
 
 export default LightPillar;

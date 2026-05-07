@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { parseAuthLoginClientPayload } from "@/lib/api/client-parsers";
 import { readJsonUnknownFromResponse } from "@/lib/http/json";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthShell } from "@/components/auth/auth-shell";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -131,5 +131,24 @@ export default function LoginPage() {
               </motion.div>
             </form>
     </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthShell
+          eyebrow="Welcome Back"
+          title="Sign in to your training workspace"
+          description="Cargando…"
+          footer={null}
+        >
+          <div className="h-32 animate-pulse rounded-xl bg-white/5" />
+        </AuthShell>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -62,6 +62,8 @@ const testimonials = [
 type HomeLandingProps = {
   isAuthenticated: boolean;
   sessionEmail: string | null;
+  activeWorkspaceRole: "OWNER" | "ADMIN" | "MEMBER" | null;
+  hasWorkspace: boolean;
 };
 
 type CounterCardProps = {
@@ -104,7 +106,12 @@ function CounterCard({ label, value, suffix }: CounterCardProps) {
   );
 }
 
-export function HomeLanding({ isAuthenticated, sessionEmail }: HomeLandingProps) {
+export function HomeLanding({
+  isAuthenticated,
+  sessionEmail,
+  activeWorkspaceRole,
+  hasWorkspace,
+}: HomeLandingProps) {
   const pageRef = useRef<HTMLDivElement>(null);
   const storyRef = useRef<HTMLElement>(null);
   const storyInnerRef = useRef<HTMLDivElement>(null);
@@ -175,60 +182,50 @@ export function HomeLanding({ isAuthenticated, sessionEmail }: HomeLandingProps)
       <div className="pointer-events-none fixed -top-[28vh] inset-x-[-28vw] z-0 h-[150vh] opacity-85">
         <LandingScene progress={sceneProgress} />
       </div>
-      <header
-        className={`landing-nav fixed left-0 right-0 top-0 z-50 px-4 transition-all duration-300 ${
-          isSunAtTop ? "pt-3" : "pt-4"
-        }`}
-      >
-        <div
-          className={`mx-auto mt-2 flex w-fit max-w-7xl items-center justify-center rounded-2xl px-4 py-2 transition-all duration-300 ${
-            isSunAtTop
-              ? "border border-transparent bg-transparent backdrop-blur-0"
-              : "border border-white/15 bg-black/30 backdrop-blur-xl"
-          }`}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`rounded-full px-3 py-1 text-xs font-semibold tracking-[0.26em] ${
-              isSunAtTop ? "text-zinc-900" : "text-zinc-100"
-            }`}
-          >
-            CAPI
-          </motion.div>
-          <nav className={`hidden items-center transition-all duration-300 md:flex ${isSunAtTop ? "ml-2 gap-0.5" : "ml-3 gap-1"}`}>
-            <Link
-              href="#features"
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                isSunAtTop
-                  ? "text-zinc-900 hover:text-zinc-700"
-                  : "text-zinc-200 hover:bg-white/12 hover:text-white"
-              }`}
-            >
-              Features
-            </Link>
-            <Link
-              href="#timeline"
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                isSunAtTop
-                  ? "text-zinc-900 hover:text-zinc-700"
-                  : "text-zinc-200 hover:bg-white/12 hover:text-white"
-              }`}
-            >
-              Timeline
-            </Link>
-            <Link
-              href="#preview"
-              className={`rounded-full px-4 py-2 text-sm transition ${
-                isSunAtTop
-                  ? "text-zinc-900 hover:text-zinc-700"
-                  : "text-zinc-200 hover:bg-white/12 hover:text-white"
-              }`}
-            >
-              Dashboard
-            </Link>
-          </nav>
-          <div className={`ml-2 flex items-center transition-all duration-300 ${isSunAtTop ? "gap-0.5" : "gap-1"}`}>
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/60 px-6 py-4 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <h2 className="text-lg font-semibold text-white">CAPI</h2>
+            <nav className="flex flex-wrap items-center gap-4 text-sm text-zinc-400">
+              {isAuthenticated ? (
+                <>
+                  <Link href="/dashboard" className="transition-colors hover:text-white">
+                    Hub
+                  </Link>
+                  {hasWorkspace ? (
+                    <Link href="/dashboard/workspace" className="transition-colors hover:text-white">
+                      AI Assistant
+                    </Link>
+                  ) : null}
+                  {activeWorkspaceRole === "OWNER" ? (
+                    <Link href="/dashboard/owner" className="transition-colors hover:text-white">
+                      Panel owner
+                    </Link>
+                  ) : null}
+                  {activeWorkspaceRole === "MEMBER" ||
+                  activeWorkspaceRole === "ADMIN" ||
+                  activeWorkspaceRole === "OWNER" ? (
+                    <Link href="/dashboard/member" className="transition-colors hover:text-white">
+                      Team Area
+                    </Link>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <Link href="#features" className="transition-colors hover:text-white">
+                    Features
+                  </Link>
+                  <Link href="#timeline" className="transition-colors hover:text-white">
+                    Timeline
+                  </Link>
+                  <Link href="#preview" className="transition-colors hover:text-white">
+                    Dashboard
+                  </Link>
+                </>
+              )}
+            </nav>
+          </div>
+          <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
                 <MagneticButton href="/dashboard" label="Workspace" />
@@ -244,7 +241,7 @@ export function HomeLanding({ isAuthenticated, sessionEmail }: HomeLandingProps)
         </div>
       </header>
 
-      <main className="relative z-10 px-6 pb-20 pt-32">
+      <main className="relative z-10 px-6 pb-20 pt-16">
         <section className="relative mx-auto min-h-[88vh] w-full max-w-7xl rounded-3xl border border-white/10">
           <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_20%_35%,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.7)_55%,rgba(0,0,0,0.88)_100%)]" />
           <motion.div
