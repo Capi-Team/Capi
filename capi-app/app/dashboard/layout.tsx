@@ -15,9 +15,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   }
 
   return (
-    <div className="min-h-screen bg-[var(--coffee-cream)]">
-      <header className="flex items-center justify-between border-b border-[var(--coffee-border)] bg-[var(--coffee-cream)]/90 px-6 py-4 backdrop-blur-sm">
-        <h2 className="text-lg font-semibold text-[var(--coffee-dark)]">App</h2>
+    <div className="landing-root min-h-screen">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-black/60 px-6 py-4 backdrop-blur-xl">
+        <h2 className="text-lg font-semibold text-white">App</h2>
         <BackToHomeLink />
       </header>
       {children}

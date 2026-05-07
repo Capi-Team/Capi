@@ -20,7 +20,13 @@ export default function LogoutButton() {
   }
 
   return (
-    <Button type="button" variant="outline" disabled={isLoading} onClick={handleLogout}>
+    <Button
+      type="button"
+      variant="outline"
+      className="rounded-full border-white bg-white px-5 text-black hover:bg-zinc-200"
+      disabled={isLoading}
+      onClick={handleLogout}
+    >
       {isLoading ? "Signing out…" : "Sign out"}
     </Button>
   );
