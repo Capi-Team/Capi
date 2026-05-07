@@ -8,8 +8,8 @@ import { motion } from "framer-motion";
 import { parseAuthLoginClientPayload } from "@/lib/api/client-parsers";
 import { readJsonUnknownFromResponse } from "@/lib/http/json";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,22 +64,22 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="coffee-bg flex min-h-screen items-center justify-center p-4">
-      <motion.div
-        className="w-full max-w-md"
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>Use your email and password.</CardDescription>
-          </CardHeader>
-          <CardContent>
+    <AuthShell
+      eyebrow="Welcome Back"
+      title="Sign in to your training workspace"
+      description="Access onboarding paths, interactive lessons and employee progress in one place."
+      footer={
+        <>
+          No account yet?{" "}
+          <Link href="/auth/register" className="font-medium text-white underline">
+            Create one
+          </Link>
+        </>
+      }
+    >
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="email">
+                <label className="text-sm font-medium text-zinc-200" htmlFor="email">
                   Email
                 </label>
                 <Input
@@ -89,11 +89,12 @@ export default function LoginPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
+                  className="h-12 rounded-xl border-white/15 bg-white/5 text-white placeholder:text-zinc-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="password">
+                <label className="text-sm font-medium text-zinc-200" htmlFor="password">
                   Password
                 </label>
                 <Input
@@ -103,6 +104,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
+                  className="h-12 rounded-xl border-white/15 bg-white/5 text-white placeholder:text-zinc-500"
                 />
               </div>
 
@@ -111,7 +113,7 @@ export default function LoginPage() {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-sm text-red-700"
+                    className="text-sm text-rose-300"
                   >
                     {error}
                   </motion.p>
@@ -119,21 +121,15 @@ export default function LoginPage() {
               </motion.div>
 
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="h-12 w-full rounded-xl border border-white/30 bg-white text-black hover:bg-zinc-200"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Signing in…" : "Sign in"}
                 </Button>
               </motion.div>
             </form>
-
-            <p className="mt-6 text-sm text-[var(--coffee-muted)]">
-              No account yet?{" "}
-              <Link href="/auth/register" className="font-medium text-[var(--coffee-accent)] underline">
-                Create one
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </main>
+    </AuthShell>
   );
 }

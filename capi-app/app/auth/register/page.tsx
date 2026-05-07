@@ -9,8 +9,8 @@ import { MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
 import { isValidEmail } from "@/lib/auth/validators";
 import { readJsonUnknownFromResponse } from "@/lib/http/json";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -79,22 +79,22 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="coffee-bg flex min-h-screen items-center justify-center p-4">
-      <motion.div
-        className="w-full max-w-md"
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Create account</CardTitle>
-            <CardDescription>Register with your email and a secure password.</CardDescription>
-          </CardHeader>
-          <CardContent>
+    <AuthShell
+      eyebrow="Create account"
+      title="Start modern onboarding in minutes"
+      description="Set up your account to launch role-based learning, AI-assisted guidance and progress analytics."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link href="/auth/login" className="font-medium text-white underline">
+            Sign in
+          </Link>
+        </>
+      }
+    >
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="email">
+                <label className="text-sm font-medium text-zinc-200" htmlFor="email">
                   Email
                 </label>
                 <Input
@@ -104,11 +104,12 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
+                  className="h-12 rounded-xl border-white/15 bg-white/5 text-white placeholder:text-zinc-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="password">
+                <label className="text-sm font-medium text-zinc-200" htmlFor="password">
                   Password
                 </label>
                 <div className="relative">
@@ -119,23 +120,24 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     required
+                    className="h-12 rounded-xl border-white/15 bg-white/5 pr-16 text-white placeholder:text-zinc-500"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--coffee-muted)]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-300"
                     onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
-                <p className="text-xs text-[var(--coffee-muted)]">
+                <p className="text-xs text-zinc-400">
                   At least {MIN_PASSWORD_LENGTH} characters.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <label
-                  className="text-sm font-medium text-[var(--coffee-dark)]"
+                  className="text-sm font-medium text-zinc-200"
                   htmlFor="confirmPassword"
                 >
                   Confirm password
@@ -148,10 +150,11 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     required
+                    className="h-12 rounded-xl border-white/15 bg-white/5 pr-16 text-white placeholder:text-zinc-500"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--coffee-muted)]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-300"
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
                   >
                     {showConfirmPassword ? "Hide" : "Show"}
@@ -164,7 +167,7 @@ export default function RegisterPage() {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-sm text-red-600"
+                    className="text-sm text-rose-300"
                   >
                     {error}
                   </motion.p>
@@ -173,7 +176,7 @@ export default function RegisterPage() {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-sm text-emerald-800"
+                    className="text-sm text-emerald-300"
                   >
                     {success}
                   </motion.p>
@@ -181,21 +184,15 @@ export default function RegisterPage() {
               </motion.div>
 
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="h-12 w-full rounded-xl border border-white/30 bg-white text-black hover:bg-zinc-200"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Creating account…" : "Register"}
                 </Button>
               </motion.div>
             </form>
-
-            <p className="mt-6 text-sm text-[var(--coffee-muted)]">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="font-medium text-[var(--coffee-accent)] underline">
-                Sign in
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </main>
+    </AuthShell>
   );
 }
