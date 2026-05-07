@@ -53,8 +53,9 @@ export default function DashboardClient({ email, workspaces }: DashboardClientPr
         return;
       }
       setCreateName("");
-      setMessage({ type: "ok", text: "Entorno creado. Eres el propietario." });
-      router.refresh();
+      setMessage({ type: "ok", text: "Entorno creado. Eres el propietario. Redirigiendo..." });
+      const redirectTo = (raw as Record<string, unknown>).redirectTo;
+      router.push(typeof redirectTo === "string" ? redirectTo : "/dashboard/owner");
     } catch {
       setMessage({ type: "err", text: "Error de red." });
     } finally {
@@ -85,9 +86,10 @@ export default function DashboardClient({ email, workspaces }: DashboardClientPr
       setJoinCode("");
       setMessage({
         type: "ok",
-        text: data.alreadyMember ? "Ya formas parte de ese entorno." : "Te uniste como miembro.",
+        text: data.alreadyMember ? "Ya formas parte de ese entorno. Redirigiendo..." : "Te uniste como miembro. Redirigiendo...",
       });
-      router.refresh();
+      const redirectTo = (raw as Record<string, unknown>).redirectTo;
+      router.push(typeof redirectTo === "string" ? redirectTo : "/dashboard/member");
     } catch {
       setMessage({ type: "err", text: "Error de red." });
     } finally {

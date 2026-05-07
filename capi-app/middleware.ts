@@ -19,6 +19,7 @@ function buildClearSessionResponse(redirectTo: URL): NextResponse {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
   if (!pathname.startsWith("/dashboard")) {
     return NextResponse.next();
   }
@@ -33,6 +34,20 @@ export async function middleware(request: NextRequest) {
   const session = await verifySessionToken(token);
   if (!session) {
     return buildClearSessionResponse(loginUrl);
+  }
+
+  const role = session.activeWorkspaceRole;
+
+  // Solo restringir rutas específicas por rol
+  // /dashboard y /dashboard/* son accesibles si hay sesión válida
+  // /dashboard/owner requiere rol OWNER
+  if (pathname.startsWith('/dashboard/owner') && role !== 'OWNER') {
+    return NextResponse.redirect(new URL('/dashboard/unauthorized', request.url));
+  }
+
+  // /dashboard/member requiere rol MEMBER (o OWNER que también puede verlo)
+  if (pathname.startsWith('/dashboard/member') && role !== 'MEMBER' && role !== 'OWNER') {
+    return NextResponse.redirect(new URL('/dashboard/unauthorized', request.url));
   }
 
   return NextResponse.next();
