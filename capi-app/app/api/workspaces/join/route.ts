@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { readJsonRecordFromRequest } from "@/lib/http/json";
 import { normalizeInviteCode } from "@/lib/workspace-code";
 import { toTrimmedString } from "@/lib/strings/coerce";
+import { setActiveWorkspaceInSession } from "@/lib/jwt-session";
 
 export async function POST(request: NextRequest) {
   const session = await getCurrentSession();
@@ -50,10 +51,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (existing) {
+    // Ya es miembro — actualizamos sesión con su rol actual
+    const role = existing.role === WorkspaceRole.OWNER ? 'OWNER' : 'MEMBER';
+    await setActiveWorkspaceInSession(workspace.id, role);
     return NextResponse.json({
       success: true,
       alreadyMember: true,
       workspace,
+      redirectTo: role === 'OWNER' ? '/dashboard/owner' : '/dashboard/member',
     });
   }
 
@@ -65,8 +70,12 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  // Actualizamos la sesión con el workspace activo y rol MEMBER
+  await setActiveWorkspaceInSession(workspace.id, 'MEMBER');
+
   return NextResponse.json({
     success: true,
     workspace,
+    redirectTo: '/dashboard/member',
   });
 }

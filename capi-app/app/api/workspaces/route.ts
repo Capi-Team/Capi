@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { readJsonRecordFromRequest } from "@/lib/http/json";
 import { generateInviteCode } from "@/lib/workspace-code";
 import { toTrimmedString } from "@/lib/strings/coerce";
+import { setActiveWorkspaceInSession } from "@/lib/jwt-session";
 
 export async function POST(request: NextRequest) {
   const session = await getCurrentSession();
@@ -56,8 +57,12 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  // Actualizamos la sesión con el nuevo workspace y rol OWNER
+  await setActiveWorkspaceInSession(workspace.id, 'OWNER');
+
   return NextResponse.json({
     success: true,
     workspace,
+    redirectTo: '/dashboard/owner',
   });
 }
