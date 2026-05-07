@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import LogoutButton from "@/app/dashboard/logout-button";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0 },
 };
 
-export function HomeLanding() {
+type HomeLandingProps = {
+  isAuthenticated: boolean;
+  sessionEmail: string | null;
+};
+
+export function HomeLanding({ isAuthenticated, sessionEmail }: HomeLandingProps) {
   return (
     <div className="coffee-bg min-h-screen text-[var(--coffee-ink)]">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
@@ -20,23 +26,47 @@ export function HomeLanding() {
         >
           CAPI
         </motion.div>
-        <nav className="flex items-center gap-3">
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Link
-              href="/auth/login"
-              className="coffee-btn-outline rounded-lg px-4 py-2 text-sm transition-colors"
-            >
-              Iniciar sesión
-            </Link>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Link
-              href="/auth/register"
-              className="coffee-btn-primary rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-            >
-              Crear cuenta
-            </Link>
-          </motion.div>
+        <nav className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
+          {isAuthenticated && sessionEmail ? (
+            <p className="max-w-[min(100%,16rem)] truncate text-right text-xs text-[var(--coffee-muted)] sm:max-w-xs">
+              Signed in as{" "}
+              <span className="font-medium text-[var(--coffee-ink)]">{sessionEmail}</span>
+            </p>
+          ) : null}
+          <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  href="/dashboard"
+                  className="coffee-btn-outline rounded-lg px-4 py-2 text-sm transition-colors"
+                >
+                  Workspace hub
+                </Link>
+              </motion.div>
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  href="/auth/login"
+                  className="coffee-btn-outline rounded-lg px-4 py-2 text-sm transition-colors"
+                >
+                  Sign in
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  href="/auth/register"
+                  className="coffee-btn-primary rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  Create account
+                </Link>
+              </motion.div>
+            </>
+          )}
+          </div>
         </nav>
       </header>
 
@@ -55,22 +85,22 @@ export function HomeLanding() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="mb-3 text-xs uppercase tracking-[0.28em] text-[var(--coffee-muted)]"
           >
-            Bienvenido
+            Welcome
           </motion.p>
           <motion.h1
             variants={fadeUp}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="text-4xl font-semibold leading-tight sm:text-5xl"
           >
-            Aprende y crece con claridad
+            Learn with clarity
           </motion.h1>
           <motion.p
             variants={fadeUp}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto mt-6 max-w-xl text-base text-[var(--coffee-muted)]"
           >
-            Regístrate con tu correo, organiza tu entorno de trabajo y accede al panel con una
-            experiencia cálida y profesional.
+            Sign up with your email, organize workspaces, and access your dashboard with a calm,
+            professional experience.
           </motion.p>
           <motion.div
             variants={fadeUp}
@@ -86,20 +116,20 @@ export function HomeLanding() {
           transition={{ delay: 0.25, duration: 0.4 }}
         >
           {[
-            { t: "Acceso seguro", d: "Sesión con JWT y cookies httpOnly." },
-            { t: "Tu espacio", d: "Crea o únete a entornos de trabajo con código." },
-            { t: "Simple", d: "Sin OAuth corporativo ni dominios bloqueados." },
+            { title: "Secure access", body: "JWT sessions with httpOnly cookies." },
+            { title: "Your space", body: "Create or join workspaces with an invite code." },
+            { title: "Simple", body: "No corporate OAuth or blocked domains required." },
           ].map((item, i) => (
             <motion.div
-              key={item.t}
+              key={item.title}
               className="coffee-card-muted rounded-xl p-4 text-left"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + i * 0.06, duration: 0.35 }}
               whileHover={{ y: -2, transition: { duration: 0.2 } }}
             >
-              <p className="text-sm font-semibold text-[var(--coffee-dark)]">{item.t}</p>
-              <p className="mt-1 text-xs text-[var(--coffee-muted)]">{item.d}</p>
+              <p className="text-sm font-semibold text-[var(--coffee-dark)]">{item.title}</p>
+              <p className="mt-1 text-xs text-[var(--coffee-muted)]">{item.body}</p>
             </motion.div>
           ))}
         </motion.div>

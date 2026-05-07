@@ -12,28 +12,31 @@ export async function handleRegisterBody(body: Record<string, unknown>) {
 
   if (!email || !password || !confirmPassword) {
     return NextResponse.json(
-      { success: false, message: "Completa todos los campos requeridos." },
+      { success: false, message: "Fill in every required field." },
       { status: 400 }
     );
   }
 
   if (!isValidEmail(email)) {
     return NextResponse.json(
-      { success: false, message: "El correo no tiene un formato válido." },
+      { success: false, message: "Please enter a valid email address." },
       { status: 400 }
     );
   }
 
   if (password.length < MIN_PASSWORD_LENGTH) {
     return NextResponse.json(
-      { success: false, message: "La contraseña debe tener al menos 8 caracteres." },
+      {
+        success: false,
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+      },
       { status: 400 }
     );
   }
 
   if (password !== confirmPassword) {
     return NextResponse.json(
-      { success: false, message: "Las contraseñas no coinciden." },
+      { success: false, message: "Passwords do not match." },
       { status: 400 }
     );
   }
@@ -41,7 +44,7 @@ export async function handleRegisterBody(body: Record<string, unknown>) {
   const existingUser = await db.user.findUnique({ where: { email } });
   if (existingUser) {
     return NextResponse.json(
-      { success: false, message: "Ya existe una cuenta con este correo." },
+      { success: false, message: "An account with this email already exists." },
       { status: 409 }
     );
   }
@@ -58,7 +61,7 @@ export async function handleRegisterBody(body: Record<string, unknown>) {
   return NextResponse.json(
     {
       success: true,
-      message: "Registro creado correctamente.",
+      message: "Account created successfully.",
     },
     { status: 201 }
   );

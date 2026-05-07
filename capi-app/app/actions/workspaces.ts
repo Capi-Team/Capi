@@ -1,92 +1,114 @@
-'use server'
+"use server";
 
-import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
-import { verifySessionToken, setActiveWorkspaceInSession } from '@/lib/jwt-session';
-import { redirect } from 'next/navigation';
-import { authConfig } from '@/lib/config';
+import { WorkspaceRole } from "@prisma/client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { authConfig } from "@/lib/config";
+import { verifySessionToken, setActiveWorkspaceInSession } from "@/lib/jwt-session";
+import { generateInviteCode } from "@/lib/workspace-code";
+import { toTrimmedString } from "@/lib/strings/coerce";
+import {
+  dashboardHrefForSessionRole,
+  sessionRoleFromMembership,
+} from "@/lib/workspaces/dashboard-path";
 
 async function getSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(authConfig.sessionCookieName)?.value;
   if (!token) return null;
-  return await verifySessionToken(token);
+  return verifySessionToken(token);
 }
 
-// 1. Crear un nuevo Workspace
 export async function createWorkspace(formData: FormData) {
   const session = await getSession();
-  if (!session) throw new Error("No autenticado");
+  if (!session) throw new Error("Not authenticated.");
 
-  const userId = parseInt(session.sub, 10);
-  const name = formData.get('name') as string;
+  const userId = Number.parseInt(session.sub, 10);
+  if (!Number.isFinite(userId)) throw new Error("Invalid session.");
+
+  const name = toTrimmedString(formData.get("name"));
+  if (!name || name.length < 2) {
+    throw new Error("Workspace name must be at least 2 characters.");
+  }
+
+  const duplicateMembership = await db.workspaceMember.findFirst({
+    where: {
+      userId,
+      workspace: {
+        name: { equals: name, mode: "insensitive" },
+      },
+    },
+    select: { id: true },
+  });
+
+  if (duplicateMembership) {
+    throw new Error("You already belong to a workspace with this name.");
+  }
+
+  let inviteCode = generateInviteCode();
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const clash = await db.workspace.findUnique({ where: { inviteCode } });
+    if (!clash) break;
+    inviteCode = generateInviteCode();
+  }
 
   const newWorkspace = await db.workspace.create({
     data: {
-      name,
+      name: name.slice(0, 255),
+      inviteCode,
       createdById: userId,
       members: {
         create: {
-          userId: userId,
-          role: 'OWNER'
-        }
-      }
-    }
+          userId,
+          role: WorkspaceRole.OWNER,
+        },
+      },
+    },
   });
 
-  // Establecemos este nuevo workspace como el activo en la sesión
-  await setActiveWorkspaceInSession(newWorkspace.id, 'OWNER');
-
-  // Redirigimos al dashboard del OWNER
-  redirect(`/dashboard/owner`);
+  await setActiveWorkspaceInSession(newWorkspace.id, "OWNER");
+  redirect("/dashboard/owner");
 }
 
-// 2. Unirse a un Workspace existente (por ID)
 export async function joinWorkspace(workspaceId: number) {
   const session = await getSession();
-  if (!session) throw new Error("No autenticado");
+  if (!session) throw new Error("Not authenticated.");
 
-  const userId = parseInt(session.sub, 10);
+  const userId = Number.parseInt(session.sub, 10);
+  if (!Number.isFinite(userId)) throw new Error("Invalid session.");
 
-  // Verificamos si el workspace existe
   const workspace = await db.workspace.findUnique({
-    where: { id: workspaceId }
+    where: { id: workspaceId },
   });
 
-  if (!workspace) throw new Error("Workspace no encontrado");
+  if (!workspace) throw new Error("Workspace not found.");
 
-  // Verificamos si ya es miembro
   const existingMember = await db.workspaceMember.findUnique({
     where: {
       userId_workspaceId: {
-        workspaceId: workspaceId,
-        userId: userId
-      }
-    }
+        workspaceId,
+        userId,
+      },
+    },
   });
 
-  let userRole = 'MEMBER';
+  let membershipRole: WorkspaceRole;
 
   if (!existingMember) {
-    // Si no es miembro, lo agregamos como MEMBER
     await db.workspaceMember.create({
       data: {
         workspaceId,
-        userId: userId,
-        role: 'MEMBER'
-      }
+        userId,
+        role: WorkspaceRole.MEMBER,
+      },
     });
+    membershipRole = WorkspaceRole.MEMBER;
   } else {
-    userRole = existingMember.role;
+    membershipRole = existingMember.role;
   }
 
-  // Actualizamos la sesión para que este sea el entorno activo
-  await setActiveWorkspaceInSession(workspaceId, userRole as 'OWNER' | 'MEMBER');
-
-  // Redirección basada en el rol
-  if (userRole === 'OWNER') {
-    redirect(`/dashboard/owner`);
-  } else {
-    redirect(`/dashboard/member`);
-  }
+  const sessionRole = sessionRoleFromMembership(membershipRole);
+  await setActiveWorkspaceInSession(workspaceId, sessionRole);
+  redirect(dashboardHrefForSessionRole(sessionRole));
 }

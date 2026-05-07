@@ -10,13 +10,14 @@ export default async function MemberDashboardPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-[var(--coffee-dark)] mb-2">Dashboard del Miembro</h1>
-      <p className="text-[var(--coffee-muted)] mb-6">
-        Bienvenido, <span className="font-semibold text-[var(--coffee-ink)]">{session.email}</span>.
-        Tienes acceso como <span className="font-semibold text-blue-700">MEMBER</span> en este entorno.
+      <h1 className="mb-2 text-2xl font-bold text-[var(--coffee-dark)]">Member dashboard</h1>
+      <p className="mb-6 text-[var(--coffee-muted)]">
+        Hello, <span className="font-semibold text-[var(--coffee-ink)]">{session.email}</span>.
+        You have <span className="font-semibold text-blue-700">MEMBER</span> access in this
+        workspace.
       </p>
-      <div className="rounded-xl border border-[var(--coffee-border)] bg-blue-50 px-6 py-4 text-blue-900 text-sm">
-        Aquí irán las funcionalidades del miembro: ver procesos asignados, actividades, progreso, etc.
+      <div className="rounded-xl border border-[var(--coffee-border)] bg-blue-50 px-6 py-4 text-sm text-blue-900">
+        Member views will appear here: assigned processes, activities, and progress.
       </div>
     </div>
   );

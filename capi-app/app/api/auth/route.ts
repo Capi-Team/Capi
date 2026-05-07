@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const parsed = await readJsonRecordFromRequest(request);
   if (!parsed.ok) {
     return NextResponse.json(
-      { success: false, message: "Solicitud inválida." },
+      { success: false, message: "Invalid request." },
       { status: 400 }
     );
   }
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   const action = parseAuthAction(parsed.body.action);
   if (!action) {
     return NextResponse.json(
-      { success: false, message: "Acción de autenticación no soportada." },
+      { success: false, message: "Unsupported authentication action." },
       { status: 400 }
     );
   }

@@ -10,26 +10,26 @@ import { setActiveWorkspaceInSession } from "@/lib/jwt-session";
 export async function POST(request: NextRequest) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ success: false, message: "No autorizado." }, { status: 401 });
+    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
 
   const parsed = await readJsonRecordFromRequest(request);
   if (!parsed.ok) {
-    return NextResponse.json({ success: false, message: "Solicitud inválida." }, { status: 400 });
+    return NextResponse.json({ success: false, message: "Invalid request." }, { status: 400 });
   }
 
   const rawCode = toTrimmedString(parsed.body.inviteCode);
   const inviteCode = normalizeInviteCode(rawCode);
   if (!inviteCode) {
     return NextResponse.json(
-      { success: false, message: "Ingresa un código de acceso." },
+      { success: false, message: "Enter a valid invite code." },
       { status: 400 }
     );
   }
 
   const userId = Number.parseInt(session.sub, 10);
   if (!Number.isFinite(userId)) {
-    return NextResponse.json({ success: false, message: "Sesión inválida." }, { status: 401 });
+    return NextResponse.json({ success: false, message: "Invalid session." }, { status: 401 });
   }
 
   const workspace = await db.workspace.findFirst({
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
   if (!workspace) {
     return NextResponse.json(
-      { success: false, message: "No encontramos un entorno con ese código." },
+      { success: false, message: "No workspace matches that invite code." },
       { status: 404 }
     );
   }

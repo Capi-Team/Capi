@@ -1,5 +1,12 @@
+import { getCurrentSession } from "@/lib/auth";
 import { HomeLanding } from "@/components/home/home-landing";
 
-export default function Home() {
-  return <HomeLanding />;
+export default async function Home() {
+  const session = await getCurrentSession();
+  return (
+    <HomeLanding
+      isAuthenticated={session !== null}
+      sessionEmail={session?.email ?? null}
+    />
+  );
 }

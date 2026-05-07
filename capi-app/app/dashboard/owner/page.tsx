@@ -8,13 +8,14 @@ export default async function OwnerDashboardPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-[var(--coffee-dark)] mb-2">Dashboard del Propietario</h1>
-      <p className="text-[var(--coffee-muted)] mb-6">
-        Bienvenido, <span className="font-semibold text-[var(--coffee-ink)]">{session.email}</span>.
-        Tienes acceso como <span className="font-semibold text-amber-700">OWNER</span> en este entorno.
+      <h1 className="mb-2 text-2xl font-bold text-[var(--coffee-dark)]">Owner dashboard</h1>
+      <p className="mb-6 text-[var(--coffee-muted)]">
+        Hello, <span className="font-semibold text-[var(--coffee-ink)]">{session.email}</span>.
+        You have <span className="font-semibold text-amber-700">OWNER</span> access in this
+        workspace.
       </p>
-      <div className="rounded-xl border border-[var(--coffee-border)] bg-amber-50 px-6 py-4 text-amber-900 text-sm">
-        Aquí irán las funcionalidades exclusivas del propietario: gestión de miembros, configuración del entorno, etc.
+      <div className="rounded-xl border border-[var(--coffee-border)] bg-amber-50 px-6 py-4 text-sm text-amber-900">
+        Owner-only tools will live here: member management, workspace settings, and more.
       </div>
     </div>
   );

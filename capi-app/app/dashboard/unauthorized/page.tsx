@@ -3,17 +3,17 @@ import Link from "next/link";
 export default function UnauthorizedPage() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-8">
-      <div className="text-center max-w-sm">
-        <div className="text-5xl mb-4">🚫</div>
-        <h1 className="text-2xl font-bold text-[var(--coffee-dark)] mb-2">Acceso denegado</h1>
-        <p className="text-[var(--coffee-muted)] mb-6">
-          No tienes los permisos necesarios para ver esta página.
+      <div className="max-w-sm text-center">
+        <div className="mb-4 text-5xl">🚫</div>
+        <h1 className="mb-2 text-2xl font-bold text-[var(--coffee-dark)]">Access denied</h1>
+        <p className="mb-6 text-[var(--coffee-muted)]">
+          You do not have permission to view this page.
         </p>
         <Link
           href="/dashboard"
-          className="inline-block rounded-lg bg-[var(--coffee-dark)] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          className="inline-block rounded-lg bg-[var(--coffee-dark)] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
         >
-          Volver al inicio
+          Back to workspace hub
         </Link>
       </div>
     </div>

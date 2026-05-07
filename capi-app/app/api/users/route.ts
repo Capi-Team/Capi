@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  return NextResponse.json({ ok: true, message: "Users API en construcción." });
+  return NextResponse.json({ ok: true, message: "Users API is under construction." });
 }

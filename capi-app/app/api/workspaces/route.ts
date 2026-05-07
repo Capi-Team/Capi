@@ -10,25 +10,46 @@ import { setActiveWorkspaceInSession } from "@/lib/jwt-session";
 export async function POST(request: NextRequest) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ success: false, message: "No autorizado." }, { status: 401 });
+    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
 
   const parsed = await readJsonRecordFromRequest(request);
   if (!parsed.ok) {
-    return NextResponse.json({ success: false, message: "Solicitud inválida." }, { status: 400 });
+    return NextResponse.json({ success: false, message: "Invalid request." }, { status: 400 });
   }
 
   const name = toTrimmedString(parsed.body.name);
   if (!name || name.length < 2) {
     return NextResponse.json(
-      { success: false, message: "El nombre del entorno debe tener al menos 2 caracteres." },
+      { success: false, message: "Workspace name must be at least 2 characters." },
       { status: 400 }
     );
   }
 
   const userId = Number.parseInt(session.sub, 10);
   if (!Number.isFinite(userId)) {
-    return NextResponse.json({ success: false, message: "Sesión inválida." }, { status: 401 });
+    return NextResponse.json({ success: false, message: "Invalid session." }, { status: 401 });
+  }
+
+  const duplicateMembership = await db.workspaceMember.findFirst({
+    where: {
+      userId,
+      workspace: {
+        name: { equals: name, mode: "insensitive" },
+      },
+    },
+    select: { id: true },
+  });
+
+  if (duplicateMembership) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "You already belong to a workspace with this name. Pick another name or open the existing one.",
+      },
+      { status: 409 }
+    );
   }
 
   let inviteCode = generateInviteCode();

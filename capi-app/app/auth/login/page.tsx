@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { parseAuthLoginClientPayload } from "@/lib/api/client-parsers";
 import { readJsonUnknownFromResponse } from "@/lib/http/json";
@@ -22,7 +23,7 @@ export default function LoginPage() {
   useEffect(() => {
     const externalError = searchParams.get("error");
     if (externalError === "session_invalid") {
-      setError("Tu sesión no es válida. Inicia sesión de nuevo.");
+      setError("Your session is invalid. Please sign in again.");
     }
   }, [searchParams]);
 
@@ -31,7 +32,7 @@ export default function LoginPage() {
     setError("");
 
     if (!email || !password) {
-      setError("Completa email y contraseña.");
+      setError("Enter both email and password.");
       return;
     }
 
@@ -49,14 +50,14 @@ export default function LoginPage() {
       const raw = await readJsonUnknownFromResponse(response);
       const data = parseAuthLoginClientPayload(raw);
       if (!data || !data.success) {
-        setError(data?.message ?? "Credenciales inválidas.");
+        setError(data?.message ?? "Invalid credentials.");
         return;
       }
 
       router.push(data.redirectTo);
       router.refresh();
     } catch {
-      setError("No se pudo conectar con el servidor.");
+      setError("Could not reach the server.");
     } finally {
       setIsLoading(false);
     }
@@ -72,14 +73,14 @@ export default function LoginPage() {
       >
         <Card>
           <CardHeader>
-            <CardTitle>Iniciar sesión</CardTitle>
-            <CardDescription>Accede con tu correo y contraseña.</CardDescription>
+            <CardTitle>Sign in</CardTitle>
+            <CardDescription>Use your email and password.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="email">
-                  Correo
+                  Email
                 </label>
                 <Input
                   id="email"
@@ -93,7 +94,7 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="password">
-                  Contraseña
+                  Password
                 </label>
                 <Input
                   id="password"
@@ -119,15 +120,15 @@ export default function LoginPage() {
 
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Ingresando..." : "Ingresar"}
+                  {isLoading ? "Signing in…" : "Sign in"}
                 </Button>
               </motion.div>
             </form>
 
             <p className="mt-6 text-sm text-[var(--coffee-muted)]">
-              ¿No tienes cuenta?{" "}
+              No account yet?{" "}
               <Link href="/auth/register" className="font-medium text-[var(--coffee-accent)] underline">
-                Regístrate
+                Create one
               </Link>
             </p>
           </CardContent>

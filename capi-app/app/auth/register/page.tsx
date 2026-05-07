@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { parseAuthRegisterClientPayload } from "@/lib/api/client-parsers";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
@@ -29,22 +30,22 @@ export default function RegisterPage() {
     setSuccess("");
 
     if (!email || !password || !confirmPassword) {
-      setError("Completa todos los campos.");
+      setError("Complete every field.");
       return;
     }
 
     if (!emailIsValid) {
-      setError("Ingresa un correo válido.");
+      setError("Enter a valid email address.");
       return;
     }
 
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError("La contraseña debe tener al menos 8 caracteres.");
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+      setError("Passwords do not match.");
       return;
     }
 
@@ -63,7 +64,7 @@ export default function RegisterPage() {
       const raw = await readJsonUnknownFromResponse(response);
       const data = parseAuthRegisterClientPayload(raw);
       if (!data || !data.success) {
-        setError(data?.message ?? "No se pudo completar el registro.");
+        setError(data?.message ?? "Registration could not be completed.");
         return;
       }
 
@@ -71,7 +72,7 @@ export default function RegisterPage() {
       setPassword("");
       setConfirmPassword("");
     } catch {
-      setError("No se pudo conectar con el servidor.");
+      setError("Could not reach the server.");
     } finally {
       setIsLoading(false);
     }
@@ -87,14 +88,14 @@ export default function RegisterPage() {
       >
         <Card>
           <CardHeader>
-            <CardTitle>Crear cuenta</CardTitle>
-            <CardDescription>Regístrate con tu correo y una contraseña segura.</CardDescription>
+            <CardTitle>Create account</CardTitle>
+            <CardDescription>Register with your email and a secure password.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="email">
-                  Correo
+                  Email
                 </label>
                 <Input
                   id="email"
@@ -108,7 +109,7 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[var(--coffee-dark)]" htmlFor="password">
-                  Contraseña
+                  Password
                 </label>
                 <div className="relative">
                   <Input
@@ -124,11 +125,11 @@ export default function RegisterPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--coffee-muted)]"
                     onClick={() => setShowPassword((prev) => !prev)}
                   >
-                    {showPassword ? "Ocultar" : "Ver"}
+                    {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
                 <p className="text-xs text-[var(--coffee-muted)]">
-                  Mínimo {MIN_PASSWORD_LENGTH} caracteres.
+                  At least {MIN_PASSWORD_LENGTH} characters.
                 </p>
               </div>
 
@@ -137,7 +138,7 @@ export default function RegisterPage() {
                   className="text-sm font-medium text-[var(--coffee-dark)]"
                   htmlFor="confirmPassword"
                 >
-                  Confirmar contraseña
+                  Confirm password
                 </label>
                 <div className="relative">
                   <Input
@@ -153,7 +154,7 @@ export default function RegisterPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--coffee-muted)]"
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
                   >
-                    {showConfirmPassword ? "Ocultar" : "Ver"}
+                    {showConfirmPassword ? "Hide" : "Show"}
                   </button>
                 </div>
               </div>
@@ -181,15 +182,15 @@ export default function RegisterPage() {
 
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Registrando..." : "Registrarme"}
+                  {isLoading ? "Creating account…" : "Register"}
                 </Button>
               </motion.div>
             </form>
 
             <p className="mt-6 text-sm text-[var(--coffee-muted)]">
-              ¿Ya tienes cuenta?{" "}
+              Already have an account?{" "}
               <Link href="/auth/login" className="font-medium text-[var(--coffee-accent)] underline">
-                Inicia sesión
+                Sign in
               </Link>
             </p>
           </CardContent>

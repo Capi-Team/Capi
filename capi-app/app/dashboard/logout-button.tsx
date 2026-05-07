@@ -13,7 +13,7 @@ export default function LogoutButton() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
-      router.push("/auth/login");
+      router.push("/");
       router.refresh();
       setIsLoading(false);
     }
@@ -21,7 +21,7 @@ export default function LogoutButton() {
 
   return (
     <Button type="button" variant="outline" disabled={isLoading} onClick={handleLogout}>
-      {isLoading ? "Cerrando..." : "Cerrar sesión"}
+      {isLoading ? "Signing out…" : "Sign out"}
     </Button>
   );
 }
