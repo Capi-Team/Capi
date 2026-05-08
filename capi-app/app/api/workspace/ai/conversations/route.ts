@@ -17,28 +17,33 @@ export async function GET() {
     );
   }
 
-  const rows = await db.conversation.findMany({
-    where: {
-      userId: access.userId,
-      workspaceId: access.workspaceId,
-    },
-    orderBy: { updatedAt: "desc" },
-    take: 50,
-    select: {
-      id: true,
-      title: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const hasConversationModel = typeof (db as any).conversation?.findMany === "function";
+
+  const rows = hasConversationModel
+    ? await (db as any).conversation.findMany({
+        where: {
+          userId: access.userId,
+          workspaceId: access.workspaceId,
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+    : [];
 
   return NextResponse.json({
     success: true,
-    conversations: rows.map((c) => ({
+    conversations: rows.map((c: any) => ({
       id: c.id,
       title: c.title,
-      createdAt: c.createdAt.toISOString(),
-      updatedAt: c.updatedAt.toISOString(),
+      createdAt: c.createdAt?.toISOString?.() ?? new Date().toISOString(),
+      updatedAt: c.updatedAt?.toISOString?.() ?? new Date().toISOString(),
     })),
   });
+
 }

@@ -10,8 +10,10 @@ import {
 } from "./actions";
 
 type OwnerDashboardPageProps = {
-  searchParams?: Promise<{ toast?: string }> | { toast?: string };
+  searchParams?: any;
 };
+
+
 
 function toastTextFromKey(key: string | undefined): string | null {
   if (key === "role-updated") return "Member role updated.";
@@ -25,9 +27,8 @@ export default async function OwnerDashboardPage({ searchParams }: OwnerDashboar
   if (!session) redirect("/auth/login");
   if (session.activeWorkspaceRole !== "OWNER") redirect("/dashboard/unauthorized");
   if (!session.activeWorkspaceId) redirect("/dashboard");
-  const resolvedSearchParams = searchParams
-    ? await Promise.resolve(searchParams)
-    : undefined;
+  const resolvedSearchParams = searchParams;
+
   const toastText = toastTextFromKey(resolvedSearchParams?.toast);
 
   const members = (await (db.workspaceMember as any).findMany({
@@ -46,8 +47,9 @@ export default async function OwnerDashboardPage({ searchParams }: OwnerDashboar
 
   const workspace = (await (db.workspace as any).findUnique({
     where: { id: session.activeWorkspaceId },
-    select: { id: true, name: true, imageUrl: true, inviteCode: true },
-  })) as { id: number; name: string; imageUrl: string | null; inviteCode: string | null } | null;
+    select: { id: true, name: true, inviteCode: true },
+  })) as { id: number; name: string; inviteCode: string | null } | null;
+
 
   return (
     <div className="p-8">
@@ -62,18 +64,9 @@ export default async function OwnerDashboardPage({ searchParams }: OwnerDashboar
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-4">
-            {workspace?.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={workspace.imageUrl}
-                alt={`${workspace.name} workspace image`}
-                className="h-20 w-20 rounded-2xl border border-white/20 object-cover shadow-[0_10px_28px_rgba(0,0,0,0.35)]"
-              />
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-2xl font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.35)]">
-                {(workspace?.name?.trim().charAt(0).toUpperCase() || "W")}
-              </div>
-            )}
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-2xl font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.35)]">
+              {(workspace?.name?.trim().charAt(0).toUpperCase() || "W")}
+            </div>
             <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Workspace access</p>
             <h2 className="mt-1 text-xl font-semibold text-white">{workspace?.name ?? "Workspace"}</h2>

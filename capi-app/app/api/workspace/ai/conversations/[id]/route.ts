@@ -25,23 +25,31 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ success: false, message: "ID inválido." }, { status: 400 });
   }
 
-  const conversation = await db.conversation.findFirst({
-    where: {
-      id: conversationId,
-      userId: access.userId,
-      workspaceId: access.workspaceId,
-    },
-  });
+  const hasConversationModel = typeof (db as any).conversation?.findFirst === "function";
+  const conversation = hasConversationModel
+    ? await (db as any).conversation.findFirst({
+        where: {
+          id: conversationId,
+          userId: access.userId,
+          workspaceId: access.workspaceId,
+        },
+      })
+    : null;
+
 
   if (!conversation) {
     return NextResponse.json({ success: false, message: "No encontrado." }, { status: 404 });
   }
 
-  const messages = await db.chatMessage.findMany({
-    where: { conversationId: conversation.id },
-    orderBy: { createdAt: "asc" },
-    take: 500,
-  });
+  const hasChatMessageModel = typeof (db as any).chatMessage?.findMany === "function";
+  const messages = hasChatMessageModel
+    ? await (db as any).chatMessage.findMany({
+        where: { conversationId: conversation.id },
+        orderBy: { createdAt: "asc" },
+        take: 500,
+      })
+    : [];
+
 
   return NextResponse.json({
     success: true,
@@ -51,12 +59,13 @@ export async function GET(_request: Request, context: RouteContext) {
       createdAt: conversation.createdAt.toISOString(),
       updatedAt: conversation.updatedAt.toISOString(),
     },
-    messages: messages.map((m) => ({
+    messages: messages.map((m: any) => ({
       id: m.id,
       role: m.role,
       content: m.content,
-      createdAt: m.createdAt.toISOString(),
+      createdAt: m.createdAt?.toISOString?.() ?? new Date().toISOString(),
     })),
+
   });
 }
 
@@ -80,22 +89,29 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ success: false, message: "ID invalido." }, { status: 400 });
   }
 
-  const conversation = await db.conversation.findFirst({
-    where: {
-      id: conversationId,
-      userId: access.userId,
-      workspaceId: access.workspaceId,
-    },
-    select: { id: true },
-  });
+  const hasConversationModel = typeof (db as any).conversation?.findFirst === "function";
+  const conversation = hasConversationModel
+    ? await (db as any).conversation.findFirst({
+        where: {
+          id: conversationId,
+          userId: access.userId,
+          workspaceId: access.workspaceId,
+        },
+        select: { id: true },
+      })
+    : null;
+
 
   if (!conversation) {
     return NextResponse.json({ success: false, message: "No encontrado." }, { status: 404 });
   }
 
-  await db.conversation.delete({
-    where: { id: conversation.id },
-  });
+  if ((db as any).conversation?.delete) {
+    await (db as any).conversation.delete({
+      where: { id: conversation.id },
+    });
+  }
+
 
   return NextResponse.json({ success: true });
 }

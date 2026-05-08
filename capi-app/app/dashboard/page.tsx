@@ -31,7 +31,6 @@ export default async function DashboardPage() {
   const workspaces = memberships.map((m) => ({
     id: m.workspace.id,
     name: m.workspace.name,
-    imageUrl: null,
     role: m.role,
     inviteCode: workspaceRoleShowsInviteCode(m.role) ? m.workspace.inviteCode : null,
   }));

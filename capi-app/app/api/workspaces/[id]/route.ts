@@ -3,20 +3,11 @@ import { WorkspaceRole } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readJsonRecordFromRequest } from "@/lib/http/json";
-import { toTrimmedString } from "@/lib/strings/coerce";
+
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-function sanitizeUrl(value: unknown): string | null | undefined {
-  if (value === undefined) return undefined;
-  const text = toTrimmedString(value);
-  if (!text) return null;
-  if (text.length > 2_000_000) return null;
-  if (!/^https?:\/\//i.test(text) && !/^data:image\/[a-zA-Z0-9.+-]+;base64,/i.test(text)) {
-    return null;
-  }
-  return text;
-}
+
 
 export async function PATCH(request: Request, context: RouteContext) {
   const session = await getCurrentSession();
@@ -55,33 +46,23 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  // body no longer accepts imageUrl
   const parsed = await readJsonRecordFromRequest(request);
   if (!parsed.ok) {
     return NextResponse.json({ success: false, message: "Invalid request." }, { status: 400 });
   }
 
-  const imageUrl = sanitizeUrl(parsed.body.imageUrl);
-  if (parsed.body.imageUrl !== undefined && imageUrl === null) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Workspace image URL must be a valid http/https URL or a base64 image.",
-      },
-      { status: 400 }
-    );
-  }
-
+  // Keep endpoint stable but ignore any imageUrl.
   const workspace = await db.workspace.update({
     where: { id: workspaceId },
-    data: {
-      ...(imageUrl !== undefined ? { imageUrl } : {}),
-    },
+    data: {},
     select: {
       id: true,
       name: true,
-      imageUrl: true,
     },
   });
+
+
 
   return NextResponse.json({ success: true, workspace });
 }

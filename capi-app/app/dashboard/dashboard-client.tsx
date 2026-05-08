@@ -18,7 +18,6 @@ import { MouseTiltCard } from "@/components/ui/mouse-tilt-card";
 export type WorkspaceRow = {
   id: number;
   name: string;
-  imageUrl: string | null;
   role: WorkspaceRole;
   inviteCode: string | null;
 };
@@ -104,27 +103,7 @@ function TrashIcon({ className }: { className?: string }) {
   );
 }
 
-function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={14}
-      height={14}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <circle cx="9" cy="9" r="2" />
-      <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
-    </svg>
-  );
-}
+
 
 function SettingsIcon({ className }: { className?: string }) {
   return (
@@ -150,14 +129,11 @@ export default function DashboardClient({
   const [openingWorkspaceId, setOpeningWorkspaceId] = useState<number | null>(null);
   const [editingContextWorkspaceId, setEditingContextWorkspaceId] = useState<number | null>(null);
   const [deletingWorkspaceId, setDeletingWorkspaceId] = useState<number | null>(null);
-  const [editingWorkspaceImageId, setEditingWorkspaceImageId] = useState<number | null>(null);
   const [openSettingsWorkspaceId, setOpenSettingsWorkspaceId] = useState<number | null>(null);
   const [copiedInviteWorkspaceId, setCopiedInviteWorkspaceId] = useState<number | null>(null);
   const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const profileFileInputRef = useRef<HTMLInputElement | null>(null);
-  const workspaceFileInputRef = useRef<HTMLInputElement | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const [workspaceImageTargetId, setWorkspaceImageTargetId] = useState<number | null>(null);
 
   useEffect(() => {
     if (openSettingsWorkspaceId === null) return;
@@ -173,30 +149,9 @@ export default function DashboardClient({
     };
   }, [openSettingsWorkspaceId]);
 
-  async function fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-          return;
-        }
-        reject(new Error("Could not read file."));
-      };
-      reader.onerror = () => reject(new Error("Could not read file."));
-      reader.readAsDataURL(file);
-    });
-  }
 
-  async function toImageDataUrl(file: File): Promise<string> {
-    if (!file.type.startsWith("image/")) {
-      throw new Error("Only image files are allowed.");
-    }
-    if (file.size > 1_000_000) {
-      throw new Error("Image must be smaller than 1 MB.");
-    }
-    return fileToDataUrl(file);
-  }
+
+
 
   async function copyInviteCode(workspaceId: number, code: string) {
     try {
@@ -427,7 +382,7 @@ export default function DashboardClient({
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      const dataUrl = await toImageDataUrl(file);
+      const dataUrl = await fileToDataUrl(file);
       setAvatarUrlDraft(dataUrl);
       setMessage({ type: "ok", text: "Profile image selected. Click Save profile." });
     } catch (error) {
@@ -440,43 +395,23 @@ export default function DashboardClient({
     }
   }
 
-  async function onWorkspaceFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    const targetId = workspaceImageTargetId;
-    if (!file || targetId === null) return;
-    setEditingWorkspaceImageId(targetId);
-    setMessage(null);
-    try {
-      const dataUrl = await toImageDataUrl(file);
-      const res = await fetch(`/api/workspaces/${targetId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: dataUrl }),
-      });
-      const raw = (await readJsonUnknownFromResponse(res)) as {
-        success?: boolean;
-        message?: string;
-        workspace?: { imageUrl?: string | null; name?: string };
+  async function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error("Could not read file."));
       };
-      if (!raw.success) {
-        setMessage({ type: "err", text: raw.message ?? "Could not update workspace image." });
-        return;
-      }
-      setWorkspaceList((prev) =>
-        prev.map((w) => (w.id === targetId ? { ...w, imageUrl: raw.workspace?.imageUrl ?? null } : w))
-      );
-      setMessage({ type: "ok", text: "Workspace image updated." });
-    } catch (error) {
-      setMessage({
-        type: "err",
-        text: error instanceof Error ? error.message : "Network error.",
-      });
-    } finally {
-      setEditingWorkspaceImageId(null);
-      setWorkspaceImageTargetId(null);
-      event.target.value = "";
-    }
+      reader.onerror = () => reject(new Error("Could not read file."));
+      reader.readAsDataURL(file);
+    });
   }
+
+
+
 
   const ownerCount = workspaceList.filter((workspace) => workspace.role === "OWNER").length;
   const memberCount = workspaceList.length - ownerCount;
@@ -678,15 +613,10 @@ export default function DashboardClient({
             transition={{ delay: 0.15, duration: 0.35 }}
           >
             <h2 className="text-lg font-semibold text-white">Your workspaces</h2>
-            <input
-              ref={workspaceFileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onWorkspaceFileChange}
-              className="hidden"
-            />
+
             <ul className="mt-3 space-y-3">
               {workspaceList.map((w, i) => {
+
                 const inviteCode = w.inviteCode;
                 return (
                   <motion.li
@@ -698,18 +628,9 @@ export default function DashboardClient({
                   >
                     <div className="landing-glass flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 px-4 py-4">
                       <div className="min-w-0 flex flex-1 items-center gap-3">
-                        {w.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={w.imageUrl}
-                            alt={`${w.name} workspace`}
-                            className="h-10 w-10 rounded-lg border border-white/20 object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-xs font-semibold text-white">
-                            {w.name.trim().charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-xs font-semibold text-white">
+                          {w.name.trim().charAt(0).toUpperCase()}
+                        </div>
                         <div className="min-w-0">
                         <p className="font-medium text-white">{w.name}</p>
                         <p className="text-xs text-zinc-400">Role: {w.role}</p>
@@ -775,19 +696,6 @@ export default function DashboardClient({
                             <button
                               type="button"
                               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-200 transition hover:bg-white/10"
-                              disabled={editingWorkspaceImageId === w.id}
-                              onClick={() => {
-                                setWorkspaceImageTargetId(w.id);
-                                workspaceFileInputRef.current?.click();
-                                setOpenSettingsWorkspaceId(null);
-                              }}
-                            >
-                              <ImageIcon className="opacity-80" />
-                              {editingWorkspaceImageId === w.id ? "Saving..." : "Upload photo"}
-                            </button>
-                            <button
-                              type="button"
-                              className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-200 transition hover:bg-white/10"
                               disabled={editingContextWorkspaceId === w.id}
                               onClick={() => {
                                 setOpenSettingsWorkspaceId(null);
