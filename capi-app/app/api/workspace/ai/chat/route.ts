@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { ChatMessageRole } from "@prisma/client";
+
+type ChatMessageRole = "USER" | "ASSISTANT" | "SYSTEM";
+
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readJsonRecordFromRequest } from "@/lib/http/json";
