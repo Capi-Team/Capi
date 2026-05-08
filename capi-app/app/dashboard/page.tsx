@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   const memberships = await db.workspaceMember.findMany({
     where: { userId },
     include: {
-      workspace: { select: { id: true, name: true, inviteCode: true, imageUrl: true } },
+      workspace: { select: { id: true, name: true, inviteCode: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -31,10 +31,11 @@ export default async function DashboardPage() {
   const workspaces = memberships.map((m) => ({
     id: m.workspace.id,
     name: m.workspace.name,
-    imageUrl: m.workspace.imageUrl,
+    imageUrl: null,
     role: m.role,
     inviteCode: workspaceRoleShowsInviteCode(m.role) ? m.workspace.inviteCode : null,
   }));
+
 
   return (
     <DashboardClient
