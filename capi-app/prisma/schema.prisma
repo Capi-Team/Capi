@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model activities {
+  id             Int             @id @default(autoincrement())
+  process_id     Int?
+  question       String
+  type           String?         @db.VarChar(50)
+  correct_answer String
+  processes      processes?      @relation(fields: [process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_attempts  user_attempts[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model companies {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(255)
+  domain     String?     @db.VarChar(255)
+  created_at DateTime?   @default(now()) @db.Timestamp(6)
+  processes  processes[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model process_steps {
+  id         Int       @id @default(autoincrement())
+  process_id Int
+  step_order Int
+  content    String
+  processes  processes @relation(fields: [process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model processes {
+  id            Int             @id @default(autoincrement())
+  name          String          @db.VarChar(255)
+  description   String?
+  company_id    Int?
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  activities    activities[]
+  process_steps process_steps[]
+  companies     companies?      @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  resources     resources[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model resources {
+  id         Int        @id @default(autoincrement())
+  process_id Int?
+  url        String
+  type       String?    @db.VarChar(50)
+  processes  processes? @relation(fields: [process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// Legacy tabla de roles (sin relación activa con User tras la migración de auth).
+model roles {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model user_attempts {
+  id          Int         @id @default(autoincrement())
+  user_id     Int?
+  activity_id Int?
+  answer      String?
+  is_correct  Boolean?
+  created_at  DateTime?   @default(now()) @db.Timestamp(6)
+  activities  activities? @relation(fields: [activity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user        User?       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @db.VarChar(255)
+  passwordHash String? @map("password") @db.VarChar(255)
+
+  // Campos esperados por el frontend/API
+  profileBio String? @map("profile_bio") @db.VarChar(1000)
+  avatarUrl  String? @map("avatar_url") @db.VarChar(2000)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  createdWorkspaces Workspace[]       @relation("WorkspaceCreatedBy")
+  workspaceMembers  WorkspaceMember[]
+  user_attempts     user_attempts[]
+
+  @@map("users")
+}
+
+
+model Workspace {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  slug        String?  @unique @db.VarChar(255)
+  inviteCode  String?  @unique @map("invite_code") @db.VarChar(32)
+  createdById Int      @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  createdBy User              @relation("WorkspaceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  members   WorkspaceMember[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          Int           @id @default(autoincrement())
+  userId      Int           @map("user_id")
+  workspaceId Int           @map("workspace_id")
+  role        WorkspaceRole
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
+}

@@ -1,0 +1,57 @@
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { clearSessionCookie, getCurrentSession } from "@/lib/auth";
+import { BackToHomeLink } from "@/components/dashboard/back-to-home-link";
+
+type DashboardLayoutProps = {
+  children: ReactNode;
+};
+
+export default async function DashboardLayout({ children }: DashboardLayoutProps) {
+  const session = await getCurrentSession();
+  if (!session) {
+    await clearSessionCookie();
+    redirect("/auth/login");
+  }
+
+  const role = session.activeWorkspaceRole;
+  const hasWorkspace = typeof session.activeWorkspaceId === "number";
+
+  return (
+    <div className="landing-root min-h-screen">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 bg-black/60 px-6 py-4 backdrop-blur-xl">
+        <div className="flex flex-wrap items-center gap-6">
+          <h2 className="text-lg font-semibold text-white">CAPI</h2>
+          <nav className="flex flex-wrap items-center gap-4 text-sm text-zinc-400">
+            <Link href="/dashboard" className="transition-colors hover:text-white">
+              Hub
+            </Link>
+            {hasWorkspace ? (
+              <Link href="/dashboard/workspace" className="transition-colors hover:text-white">
+                AI Assistant
+              </Link>
+            ) : null}
+            {hasWorkspace ? (
+              <Link href="/dashboard/resources" className="transition-colors hover:text-white">
+                Resources
+              </Link>
+            ) : null}
+            {role === "OWNER" ? (
+              <Link href="/dashboard/owner" className="transition-colors hover:text-white">
+                Panel owner
+              </Link>
+            ) : null}
+            {role === "MEMBER" || role === "ADMIN" || role === "OWNER" ? (
+              <Link href="/dashboard/member" className="transition-colors hover:text-white">
+                Team Area
+              </Link>
+            ) : null}
+          </nav>
+        </div>
+        <BackToHomeLink />
+      </header>
+      {children}
+    </div>
+  );
+}
