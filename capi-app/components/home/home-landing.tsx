@@ -12,7 +12,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import LogoutButton from "@/app/dashboard/logout-button";
-import { LandingScene } from "@/components/home/landing-scene";
 import { MouseTiltCard } from "@/components/ui/mouse-tilt-card";
 
 const featureCards = [
@@ -115,7 +114,6 @@ export function HomeLanding({
   const pageRef = useRef<HTMLDivElement>(null);
   const storyRef = useRef<HTMLElement>(null);
   const storyInnerRef = useRef<HTMLDivElement>(null);
-  const [sceneProgress, setSceneProgress] = useState(0);
   const storyPanels = useMemo(
     () => [
       "AI onboarding copilot",
@@ -124,13 +122,6 @@ export function HomeLanding({
     ],
     []
   );
-  const { scrollY } = useScroll();
-  const isSunAtTop = sceneProgress < 0.1;
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const target = Math.min(Math.max(latest / 900, 0), 1);
-    setSceneProgress((prev) => prev + (target - prev) * 0.14);
-  });
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -179,9 +170,7 @@ export function HomeLanding({
 
   return (
     <div ref={pageRef} className="landing-root relative min-h-screen text-white">
-      <div className="pointer-events-none fixed -top-[28vh] inset-x-[-28vw] z-0 h-[150vh] opacity-85">
-        <LandingScene progress={sceneProgress} />
-      </div>
+
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/60 px-6 py-4 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-6">
@@ -242,8 +231,8 @@ export function HomeLanding({
       </header>
 
       <main className="relative z-10 px-6 pb-20 pt-16">
-        <section className="relative mx-auto min-h-[88vh] w-full max-w-7xl rounded-3xl border border-white/10">
-          <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_20%_35%,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.7)_55%,rgba(0,0,0,0.88)_100%)]" />
+        <section className="relative mx-auto min-h-[88vh] w-full max-w-7xl rounded-3xl border border-white/10 bg-zinc-950/50">
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

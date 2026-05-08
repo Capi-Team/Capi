@@ -34,8 +34,8 @@ export function AuthShell({ eyebrow, title, description, children, footer }: Aut
         </section>
 
         <section className="relative order-1 min-h-[20rem] overflow-hidden border-b border-white/10 bg-black lg:order-2 lg:min-h-full lg:border-b-0 lg:border-l">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.02)_28%,rgba(0,0,0,0)_62%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(255,255,255,0.03)_0%,rgba(0,0,0,0)_45%)]" />
+          <div className="absolute inset-0 bg-zinc-950/20" />
+
         </section>
       </div>
     </main>

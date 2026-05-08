@@ -489,8 +489,8 @@ export default function DashboardClient({
         transition={{ duration: 0.35 }}
         className="mx-auto max-w-6xl"
       >
-        <section className="relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-[radial-gradient(circle_at_10%_15%,#1e1e1e_0%,#101010_40%,#070707_100%)] p-8 shadow-[0_30px_70px_rgba(0,0,0,0.35)]">
-          <div className="absolute -right-20 -top-16 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0)_75%)] blur-lg" />
+        <section className="relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-zinc-900/50 p-8 shadow-[0_30px_70px_rgba(0,0,0,0.35)]">
+
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

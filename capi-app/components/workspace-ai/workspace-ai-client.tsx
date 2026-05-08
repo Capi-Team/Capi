@@ -316,8 +316,8 @@ export default function WorkspaceAiClient() {
         transition={{ duration: 0.4 }}
         className="mx-auto max-w-7xl"
       >
-        <section className="relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-[radial-gradient(circle_at_12%_18%,#1c1c1c_0%,#0c0c0c_42%,#050505_100%)] p-8 shadow-[0_28px_70px_rgba(0,0,0,0.38)]">
-          <div className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(120,200,255,0.12)_0%,rgba(0,0,0,0)_70%)] blur-2xl" />
+        <section className="relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-zinc-900/50 p-8 shadow-[0_28px_70px_rgba(0,0,0,0.38)]">
+
           <motion.p
             initial={{ opacity: 0, x: -6 }}
             animate={{ opacity: 1, x: 0 }}
@@ -371,11 +371,10 @@ export default function WorkspaceAiClient() {
                       <button
                         type="button"
                         onClick={() => void loadConversation(c.id)}
-                        className={`flex-1 rounded-xl border px-3 py-2 text-left text-xs transition-colors ${
-                          conversationId === c.id
+                        className={`flex-1 rounded-xl border px-3 py-2 text-left text-xs transition-colors ${conversationId === c.id
                             ? "border-white/35 bg-white/15 text-white"
                             : "border-white/10 bg-black/30 text-zinc-300 hover:border-white/25 hover:bg-white/10"
-                        }`}
+                          }`}
                       >
                         <span className="line-clamp-2">{c.title || `Chat #${c.id}`}</span>
                       </button>
@@ -459,11 +458,10 @@ export default function WorkspaceAiClient() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.22 }}
-                        className={`max-w-[92%] rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
-                          m.role === "USER"
+                        className={`max-w-[92%] rounded-2xl border px-4 py-3 text-sm leading-relaxed ${m.role === "USER"
                             ? "ml-auto border-emerald-500/25 bg-emerald-500/10 text-emerald-50"
                             : "border-white/10 bg-black/35 text-zinc-100"
-                        }`}
+                          }`}
                       >
                         <p className="text-[10px] uppercase tracking-wider text-zinc-500">
                           {m.role === "USER" ? "You" : "Assistant"}
