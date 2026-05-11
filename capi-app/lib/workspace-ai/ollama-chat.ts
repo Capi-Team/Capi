@@ -16,7 +16,8 @@ type OllamaChatApiResponse = {
   error?: string;
 };
 
-const OLLAMA_TIMEOUT_MS = 12000;
+/** Inferencia local puede tardar más que un servicio remoto. */
+const OLLAMA_TIMEOUT_MS = 120_000;
 
 function mapRole(role: ChatMessageRole): "user" | "assistant" | "system" {
   if (role === "ASSISTANT") return "assistant";

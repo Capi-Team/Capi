@@ -143,43 +143,9 @@ export async function PATCH(request: Request) {
     select: { name: true },
   });
 
-  // ensure (si existe persistencia) o fallback en memoria.
   await ensureWorkspaceAIConfig(access.workspaceId, workspace?.name ?? "Workspace");
 
-  // Si workspaceAIConfig no existe en Prisma, no persistimos; devolvemos éxito con un config calculado.
-  const hasWorkspaceAIConfigModel = typeof (db as any).workspaceAIConfig?.update === "function";
-
-  if (!hasWorkspaceAIConfigModel) {
-    const fallbackCompanyName =
-      companyName ?? workspace?.name ?? "Workspace";
-
-    const merged = {
-      id: -1,
-      workspaceId: access.workspaceId,
-      companyName: fallbackCompanyName.slice(0, 255),
-      aiContext: aiContext ?? "",
-      welcomeMessage: welcomeMessage ?? null,
-      userInstructions: userInstructions ?? null,
-      strictMode: strictMode ?? true,
-      updatedAt: new Date(),
-    };
-
-    return NextResponse.json({
-      success: true,
-      config: {
-        id: merged.id,
-        workspaceId: merged.workspaceId,
-        companyName: merged.companyName,
-        aiContext: merged.aiContext,
-        welcomeMessage: merged.welcomeMessage,
-        userInstructions: merged.userInstructions,
-        strictMode: merged.strictMode,
-        updatedAt: merged.updatedAt.toISOString(),
-      },
-    });
-  }
-
-  const updated = await (db as any).workspaceAIConfig.update({
+  const updated = await db.workspaceAIConfig.update({
     where: { workspaceId: access.workspaceId },
     data: {
       ...(companyName !== undefined ? { companyName: companyName.slice(0, 255) } : {}),

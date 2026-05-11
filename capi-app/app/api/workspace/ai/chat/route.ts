@@ -1,15 +1,5 @@
+import { ChatMessageRole } from "@prisma/client";
 import { NextResponse } from "next/server";
-
-// Para evitar fallos de build cuando Prisma no tiene los modelos/tablas de AI,
-// degradamos tipado en runtime si faltan modelos.
-const ChatMessageRole = {
-  USER: "USER",
-  ASSISTANT: "ASSISTANT",
-  SYSTEM: "SYSTEM",
-} as const;
-
-type ChatMessageRole = (typeof ChatMessageRole)[keyof typeof ChatMessageRole];
-
 
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -73,11 +63,9 @@ export async function POST(request: Request) {
     workspace?.name ?? "Workspace"
   );
 
-  const hasConversationModel = typeof (db as any).conversation?.findFirst === "function";
-
   let conversation =
-    conversationId !== undefined && Number.isFinite(conversationId) && hasConversationModel
-      ? await (db as any).conversation.findFirst({
+    conversationId !== undefined && Number.isFinite(conversationId)
+      ? await db.conversation.findFirst({
           where: {
             id: conversationId,
             userId: access.userId,
@@ -85,7 +73,6 @@ export async function POST(request: Request) {
           },
         })
       : null;
-
 
   if (conversationId !== undefined && Number.isFinite(conversationId) && !conversation) {
     return NextResponse.json(
@@ -95,54 +82,36 @@ export async function POST(request: Request) {
   }
 
   if (!conversation) {
-    // Si no existen modelos de conversaciones en Prisma, no persistimos historial.
     const title = sanitized.slice(0, 80);
-    if (!(db as any).conversation?.create) {
-      conversation = {
-        id: -1,
-        title,
-      };
-    } else {
-      conversation = await (db as any).conversation.create({
-        data: {
-          userId: access.userId,
-          workspaceId: access.workspaceId,
-          title,
-        },
-      });
-    }
-  }
-
-
-  const systemPrompt = buildSystemPrompt(aiConfig);
-
-  const hasChatMessageModel = typeof (db as any).chatMessage?.findMany === "function";
-
-  const prior = hasChatMessageModel
-    ? await (db as any).chatMessage.findMany({
-        where: { conversationId: conversation.id },
-        orderBy: { createdAt: "asc" },
-        take: HISTORY_LIMIT,
-      })
-    : [];
-
-
-  const history = prior.map((m: any) => ({
-    role: m.role,
-    content: m.content,
-  }));
-
-
-  if ((db as any).chatMessage?.create) {
-    await (db as any).chatMessage.create({
+    conversation = await db.conversation.create({
       data: {
-        conversationId: conversation.id,
-        role: ChatMessageRole.USER,
-        content: sanitized,
+        userId: access.userId,
+        workspaceId: access.workspaceId,
+        title,
       },
     });
   }
 
+  const systemPrompt = buildSystemPrompt(aiConfig);
+
+  const prior = await db.chatMessage.findMany({
+    where: { conversationId: conversation.id },
+    orderBy: { createdAt: "asc" },
+    take: HISTORY_LIMIT,
+  });
+
+  const history = prior.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
+
+  await db.chatMessage.create({
+    data: {
+      conversationId: conversation.id,
+      role: ChatMessageRole.USER,
+      content: sanitized,
+    },
+  });
 
   const wrappedUser = wrapUserMessageForModel(sanitized);
 
@@ -166,30 +135,24 @@ export async function POST(request: Request) {
   ].join("\n");
 
   if (!result.ok) {
-    if ((db as any).chatMessage?.create) {
-      await (db as any).chatMessage.create({
-        data: {
-          conversationId: conversation.id,
-          role: ChatMessageRole.ASSISTANT,
-          content: fallbackReply,
-        },
-      });
-    }
+    await db.chatMessage.create({
+      data: {
+        conversationId: conversation.id,
+        role: ChatMessageRole.ASSISTANT,
+        content: fallbackReply,
+      },
+    });
 
-    if ((db as any).conversation?.update) {
-      await (db as any).conversation.update({
-        where: { id: conversation.id },
-        data: { updatedAt: new Date() },
-      });
-    }
+    await db.conversation.update({
+      where: { id: conversation.id },
+      data: { updatedAt: new Date() },
+    });
 
-    const messages = (db as any).chatMessage?.findMany
-      ? await (db as any).chatMessage.findMany({
-          where: { conversationId: conversation.id },
-          orderBy: { createdAt: "asc" },
-          take: 200,
-        })
-      : [];
+    const messages = await db.chatMessage.findMany({
+      where: { conversationId: conversation.id },
+      orderBy: { createdAt: "asc" },
+      take: 200,
+    });
 
     return NextResponse.json({
       success: true,
@@ -198,51 +161,44 @@ export async function POST(request: Request) {
       usedFallback: true,
       fallbackReason: result.error,
       messageWasTruncated: wasTrimmed,
-      messages: messages.map((m: any) => ({
+      messages: messages.map((m) => ({
         id: m.id,
         role: m.role,
         content: m.content,
-        createdAt: m.createdAt?.toISOString?.() ?? new Date().toISOString(),
+        createdAt: m.createdAt.toISOString(),
       })),
     });
   }
 
-  if ((db as any).chatMessage?.create) {
-    await (db as any).chatMessage.create({
-      data: {
-        conversationId: conversation.id,
-        role: ChatMessageRole.ASSISTANT,
-        content: result.content,
-      },
-    });
-  }
+  await db.chatMessage.create({
+    data: {
+      conversationId: conversation.id,
+      role: ChatMessageRole.ASSISTANT,
+      content: result.content,
+    },
+  });
 
-  if ((db as any).conversation?.update) {
-    await (db as any).conversation.update({
-      where: { id: conversation.id },
-      data: { updatedAt: new Date() },
-    });
-  }
+  await db.conversation.update({
+    where: { id: conversation.id },
+    data: { updatedAt: new Date() },
+  });
 
-  const messages = (db as any).chatMessage?.findMany
-    ? await (db as any).chatMessage.findMany({
-        where: { conversationId: conversation.id },
-        orderBy: { createdAt: "asc" },
-        take: 200,
-      })
-    : [];
+  const messages = await db.chatMessage.findMany({
+    where: { conversationId: conversation.id },
+    orderBy: { createdAt: "asc" },
+    take: 200,
+  });
 
   return NextResponse.json({
     success: true,
     conversationId: conversation.id,
     reply: result.content,
     messageWasTruncated: wasTrimmed,
-    messages: messages.map((m: any) => ({
+    messages: messages.map((m) => ({
       id: m.id,
       role: m.role,
       content: m.content,
-      createdAt: m.createdAt?.toISOString?.() ?? new Date().toISOString(),
+      createdAt: m.createdAt.toISOString(),
     })),
   });
-
 }

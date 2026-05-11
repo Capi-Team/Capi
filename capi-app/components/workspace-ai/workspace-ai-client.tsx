@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MouseTiltCard } from "@/components/ui/mouse-tilt-card";
 import { readJsonUnknownFromResponse } from "@/lib/http/json";
+import {
+  clearWorkspaceAiDraft,
+  mergeServerConfigWithLocalDraft,
+  writeWorkspaceAiDraft,
+} from "@/lib/workspace-ai/workspace-ai-draft-local";
 
 type MemberConfig = {
   companyName: string;
@@ -113,7 +118,7 @@ export default function WorkspaceAiClient() {
         strictMode: c.strictMode,
       });
       if (raw.canEdit && "aiContext" in c) {
-        setEditDraft(c as FullConfig);
+        setEditDraft(mergeServerConfigWithLocalDraft(c as FullConfig));
       } else {
         setEditDraft(null);
       }
@@ -143,6 +148,22 @@ export default function WorkspaceAiClient() {
     void loadConfig();
     void loadConversations();
   }, [loadConfig, loadConversations]);
+
+  useEffect(() => {
+    if (!canEdit || !editDraft) return;
+    const handle = window.setTimeout(() => {
+      writeWorkspaceAiDraft({
+        workspaceId: editDraft.workspaceId,
+        serverUpdatedAt: editDraft.updatedAt,
+        companyName: editDraft.companyName,
+        aiContext: editDraft.aiContext,
+        welcomeMessage: editDraft.welcomeMessage,
+        userInstructions: editDraft.userInstructions,
+        strictMode: editDraft.strictMode,
+      });
+    }, 450);
+    return () => window.clearTimeout(handle);
+  }, [canEdit, editDraft]);
 
   useEffect(() => {
     scrollToBottom();
@@ -222,7 +243,7 @@ export default function WorkspaceAiClient() {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      const timeout = setTimeout(() => controller.abort(), 120_000);
       const res = await fetch("/api/workspace/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -238,9 +259,11 @@ export default function WorkspaceAiClient() {
         conversationId?: number;
         message?: string;
         detail?: string;
+        /** Texto del asistente cuando no hay persistencia Prisma de mensajes (messages puede ir vacío). */
+        reply?: string;
       };
 
-      if (!raw.success || !raw.messages) {
+      if (!raw.success) {
         setMessages((prev) => prev.filter((m) => m.id !== optimisticUser.id));
         const detail = typeof raw.detail === "string" ? raw.detail.trim() : "";
         setChatError(
@@ -249,10 +272,41 @@ export default function WorkspaceAiClient() {
         return;
       }
 
+      const serverList = Array.isArray(raw.messages) ? raw.messages : [];
+      const replyText =
+        typeof raw.reply === "string" && raw.reply.trim().length > 0 ? raw.reply.trim() : null;
+
+      if (serverList.length === 0 && !replyText) {
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticUser.id));
+        setChatError(raw.message ?? "Could not send message.");
+        return;
+      }
+
       if (typeof raw.conversationId === "number") {
         setConversationId(raw.conversationId);
       }
-      setMessages(raw.messages);
+
+      if (serverList.length > 0) {
+        setMessages(serverList);
+      } else if (replyText) {
+        setMessages((prev) => {
+          const withoutOptimistic = prev.filter((m) => m.id !== optimisticUser.id);
+          const userCommitted: ChatMessage = {
+            id: optimisticUser.id,
+            role: "USER",
+            content: trimmed,
+            createdAt: optimisticUser.createdAt,
+          };
+          const assistantMsg: ChatMessage = {
+            id: -Date.now() - 1,
+            role: "ASSISTANT",
+            content: replyText,
+            createdAt: new Date().toISOString(),
+          };
+          return [...withoutOptimistic, userCommitted, assistantMsg];
+        });
+      }
+
       void loadConversations();
     } catch (error) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticUser.id));
@@ -291,6 +345,7 @@ export default function WorkspaceAiClient() {
         setConfigSavedMsg(raw.message ?? "Could not save.");
         return;
       }
+      clearWorkspaceAiDraft(raw.config.workspaceId);
       setEditDraft(raw.config);
       setMemberConfig({
         companyName: raw.config.companyName,
@@ -554,6 +609,11 @@ export default function WorkspaceAiClient() {
                     <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Admin configuration</p>
                     <p className="mt-1 text-sm text-zinc-300">
                       Edit company settings, member-facing instructions, and hidden model context.
+                    </p>
+                    <p className="mt-2 text-[11px] leading-snug text-zinc-500">
+                      Borrador: se guarda solo en este navegador (localStorage) mientras escribes; al recargar la
+                      página se recupera si no cambió la configuración en el servidor. Al guardar con éxito en
+                      el servidor se borra ese borrador local.
                     </p>
                   </div>
                   <Button

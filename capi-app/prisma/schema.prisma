@@ -12,6 +12,15 @@ enum WorkspaceRole {
   MEMBER
 }
 
+/// Rol de mensaje en el chat del asistente (tabla `chat_messages`).
+enum ChatMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+
+  @@map("ChatMessageRole")
+}
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model activities {
   id             Int             @id @default(autoincrement())
@@ -96,6 +105,7 @@ model User {
   createdWorkspaces Workspace[]       @relation("WorkspaceCreatedBy")
   workspaceMembers  WorkspaceMember[]
   user_attempts     user_attempts[]
+  conversations     Conversation[]
 
   @@map("users")
 }
@@ -112,8 +122,55 @@ model Workspace {
 
   createdBy User              @relation("WorkspaceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: NoAction)
   members   WorkspaceMember[]
+  aiConfig  WorkspaceAIConfig?
+  conversations Conversation[]
 
   @@map("workspaces")
+}
+
+model WorkspaceAIConfig {
+  id               Int      @id @default(autoincrement())
+  workspaceId    Int      @unique @map("workspace_id")
+  companyName      String   @map("company_name") @db.VarChar(255)
+  aiContext        String   @map("ai_context") @db.Text
+  welcomeMessage   String?  @map("welcome_message") @db.Text
+  userInstructions String?  @map("user_instructions") @db.Text
+  strictMode       Boolean  @default(true) @map("strict_mode")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("workspace_ai_configs")
+}
+
+model Conversation {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  workspaceId Int      @map("workspace_id")
+  title       String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  messages  ChatMessage[]
+
+  @@index([userId, workspaceId])
+  @@map("conversations")
+}
+
+model ChatMessage {
+  id             Int             @id @default(autoincrement())
+  conversationId Int           @map("conversation_id")
+  role           ChatMessageRole
+  content        String          @db.Text
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([conversationId])
+  @@map("chat_messages")
 }
 
 model WorkspaceMember {

@@ -4,9 +4,27 @@ import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+/**
+ * Subir este número cuando el schema de Prisma añada o quite modelos.
+ * Evita que `next dev` reutilice un PrismaClient viejo en `globalThis` sin los nuevos delegados (p. ej. `conversation`).
+ */
+const PRISMA_CLIENT_CACHE_REVISION = 2;
+
+/** Instancia cacheada válida para las rutas de IA del workspace (tras `prisma generate`). */
+function prismaClientHasWorkspaceAiDelegates(client: PrismaClient): boolean {
+  const d = client as unknown as Record<string, { findMany?: unknown; findUnique?: unknown; update?: unknown }>;
+  return (
+    typeof d.conversation?.findMany === "function" &&
+    typeof d.chatMessage?.findMany === "function" &&
+    typeof d.workspaceAIConfig?.findUnique === "function" &&
+    typeof d.workspaceAIConfig?.update === "function"
+  );
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   prismaAdapter?: PrismaPg;
+  prismaClientCacheRevision?: number;
 };
 
 function parseDotEnv(raw: string): Record<string, string> {
@@ -97,13 +115,35 @@ if (!adapter) {
   );
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function getOrCreatePrisma(): PrismaClient {
+  const log =
+    process.env.NODE_ENV === "development" ? (["error", "warn"] as const) : (["error"] as const);
+
+  const cached = globalForPrisma.prisma;
+  const revisionOk =
+    cached &&
+    globalForPrisma.prismaClientCacheRevision === PRISMA_CLIENT_CACHE_REVISION;
+
+  if (revisionOk && prismaClientHasWorkspaceAiDelegates(cached)) {
+    return cached;
+  }
+
+  if (cached) {
+    void cached.$disconnect();
+    globalForPrisma.prisma = undefined;
+  }
+
+  const client = new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: [...log],
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+    globalForPrisma.prismaClientCacheRevision = PRISMA_CLIENT_CACHE_REVISION;
+  }
+
+  return client;
 }
+
+export const db = getOrCreatePrisma();
