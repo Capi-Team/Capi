@@ -484,7 +484,7 @@ export default function WorkspaceAiClient() {
             transition={{ delay: 0.08, duration: 0.4 }}
             className="space-y-4"
           >
-            <MouseTiltCard className="landing-glass flex min-h-[520px] flex-col rounded-2xl border border-white/12 p-0">
+            <div className="landing-glass flex min-h-[520px] flex-col rounded-2xl border border-white/12 p-0">
               <div className="border-b border-white/10 px-5 py-4">
                 <p className="text-sm font-medium text-white">
                   Chat — {memberConfig?.companyName ?? "…"}
@@ -495,55 +495,36 @@ export default function WorkspaceAiClient() {
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-                <AnimatePresence initial={false}>
-                  {messages.length === 0 ? (
-                    <motion.p
-                      key="empty"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-sm text-zinc-400"
+                {messages.length === 0 ? (
+                  <p className="text-sm text-zinc-400">
+                    Ask about internal processes, policies, or training.
+                  </p>
+                ) : (
+                  messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`max-w-[92%] rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
+                        m.role === "USER"
+                          ? "ml-auto border-emerald-500/25 bg-emerald-500/10 text-emerald-50"
+                          : "border-white/10 bg-black/35 text-zinc-100"
+                      }`}
                     >
-                      Ask about internal processes, policies, or training.
-                    </motion.p>
-                  ) : (
-                    messages.map((m) => (
-                      <motion.div
-                        key={m.id}
-                        layout
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.22 }}
-                        className={`max-w-[92%] rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
-                          m.role === "USER"
-                            ? "ml-auto border-emerald-500/25 bg-emerald-500/10 text-emerald-50"
-                            : "border-white/10 bg-black/35 text-zinc-100"
-                        }`}
-                      >
-                        <p className="text-[10px] uppercase tracking-wider text-zinc-500">
-                          {m.role === "USER" ? "You" : "Assistant"}
-                        </p>
-                        <p className="mt-1 whitespace-pre-wrap">{m.content}</p>
-                      </motion.div>
-                    ))
-                  )}
-                  {chatBusy ? (
-                    <motion.div
-                      key="thinking"
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.2 }}
-                      className="max-w-[92%] rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-zinc-100"
-                    >
-                      <p className="text-[10px] uppercase tracking-wider text-zinc-500">Assistant</p>
-                      <div className="mt-2 flex items-center gap-2 text-zinc-300">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-500 border-t-white" />
-                        <span>AI is thinking...</span>
-                      </div>
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>
+                      <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+                        {m.role === "USER" ? "You" : "Assistant"}
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap">{m.content}</p>
+                    </div>
+                  ))
+                )}
+                {chatBusy ? (
+                  <div className="max-w-[92%] rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-sm text-zinc-100">
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-500">Assistant</p>
+                    <div className="mt-2 flex items-center gap-2 text-zinc-300">
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-500 border-t-white" />
+                      <span>AI is thinking...</span>
+                    </div>
+                  </div>
+                ) : null}
                 <div ref={bottomRef} />
               </div>
 
@@ -570,10 +551,10 @@ export default function WorkspaceAiClient() {
                   </Button>
                 </div>
               </form>
-            </MouseTiltCard>
+            </div>
 
             {memberConfig?.userInstructions ? (
-              <MouseTiltCard className="landing-glass rounded-2xl border border-white/12 p-5 text-sm text-zinc-200">
+              <div className="landing-glass rounded-2xl border border-white/12 p-5 text-sm text-zinc-200">
                 <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
                   Workspace instructions
                 </p>
@@ -582,7 +563,7 @@ export default function WorkspaceAiClient() {
                     {memberConfig.userInstructions}
                   </p>
                 </div>
-              </MouseTiltCard>
+              </div>
             ) : null}
           </motion.div>
         </div>
