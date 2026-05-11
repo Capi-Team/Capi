@@ -1,6 +1,22 @@
 -- Enum para roles de membresía en workspace
 CREATE TYPE "WorkspaceRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 
+-- Compatibilidad para entornos limpios (p. ej. shadow DB de Prisma):
+-- en producción esta tabla ya existe; aquí se crea solo si falta.
+CREATE TABLE IF NOT EXISTS "users" (
+    "id" SERIAL NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "password" VARCHAR(255),
+    "profile_bio" VARCHAR(1000),
+    "avatar_url" VARCHAR(2000),
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
+
 -- Columna updated_at en users (requerida por Prisma @updatedAt)
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 

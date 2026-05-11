@@ -1,6 +1,6 @@
 ALTER TABLE "users"
-ADD COLUMN "profile_bio" TEXT,
-ADD COLUMN "avatar_url" TEXT;
+ADD COLUMN IF NOT EXISTS "profile_bio" TEXT,
+ADD COLUMN IF NOT EXISTS "avatar_url" TEXT;
 
 ALTER TABLE "workspaces"
-ADD COLUMN "image_url" TEXT;
+ADD COLUMN IF NOT EXISTS "image_url" TEXT;
