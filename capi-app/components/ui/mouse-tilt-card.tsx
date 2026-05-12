@@ -1,15 +1,28 @@
 "use client";
 
-import { type HTMLAttributes, type MouseEvent, type ReactNode } from "react";
+import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import type { MotionProps } from "framer-motion";
 import { motion, useMotionTemplate, useMotionValue, useSpring } from "framer-motion";
 
-
-type MouseTiltCardProps = Omit<HTMLAttributes<HTMLDivElement>, "children" | "onDrag" | "onDragEnd" | "onDragStart" | "onDragOver" | "onDrop"> & {
+type MouseTiltCardProps = {
   children: ReactNode;
   intensity?: number;
-};
+  className?: string;
+  style?: CSSProperties;
+  onMouseMove?: (event: MouseEvent<HTMLDivElement>) => void;
+  onMouseLeave?: (event: MouseEvent<HTMLDivElement>) => void;
+} & Omit<MotionProps, "children">;
 
-export function MouseTiltCard({ children, className, intensity = 12, onMouseMove, onMouseLeave, ...rest }: MouseTiltCardProps) {
+
+export function MouseTiltCard({
+  children,
+  className,
+  intensity = 12,
+  onMouseMove,
+  onMouseLeave,
+  style,
+  ...rest
+}: MouseTiltCardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rx = useSpring(y, { stiffness: 260, damping: 24, mass: 0.8 });
@@ -31,7 +44,8 @@ export function MouseTiltCard({ children, className, intensity = 12, onMouseMove
 
   return (
     <motion.div
-      style={{ ...rest.style, transformStyle: "preserve-3d", transform }}
+      {...rest}
+      style={{ ...style, transformStyle: "preserve-3d", transform }}
       className={className}
       onMouseMove={(event) => {
         onMove(event);
@@ -48,3 +62,4 @@ export function MouseTiltCard({ children, className, intensity = 12, onMouseMove
     </motion.div>
   );
 }
+
